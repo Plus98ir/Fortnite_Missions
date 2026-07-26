@@ -67,4 +67,4 @@ systemctl restart vbucksbot.service
 * **Also**
 * If you don't have a server or prefer to skip the installation and setup process, you can use my bot. Just a heads-up, I am not sure how long it will remain active: 
 ```python
-* **@plus98vbucks_bot**
+@plus98vbucks_bot
