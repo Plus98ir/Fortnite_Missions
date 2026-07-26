@@ -326,8 +326,8 @@ if __name__ == '__main__':
     application = ApplicationBuilder().token(TOKEN).build()
 
     job_queue = application.job_queue
-    job_queue.run_daily(daily_reset_notification, time=time(hour=0, minute=0, tzinfo=timezone.utc))
-    job_queue.run_daily(weekly_reset_notification, time=time(hour=0, minute=0, tzinfo=timezone.utc))
+    job_queue.run_daily(daily_reset_notification, time=time(hour=0, minute=1, tzinfo=timezone.utc))
+    job_queue.run_daily(weekly_reset_notification, time=time(hour=0, minute=1, tzinfo=timezone.utc))
 
     application.add_handler(CommandHandler("start", start))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_handler))
