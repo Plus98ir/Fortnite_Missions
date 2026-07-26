@@ -191,7 +191,7 @@ def get_160_missions():
         return f"❌ Error fetching 160 missions: {e}"
 
 def get_weekly_superchargers():
-    url = "https://seebot.dev/missions.php"  # یا هر لینکی که برای جوایز هفتگی داری
+    url = "https://seebot.dev/missions.php"
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "Accept": "application/json, text/javascript, */*; q=0.01"
@@ -216,38 +216,45 @@ def get_weekly_superchargers():
                         
         rewards_found = []
         if json_data:
-            # فرض بر اینه که اینجا دیتای هفتگی رو فیلتر می‌کنی
             for mission in json_data:
-                # این قسمت بسته به ساختار کدی که برای هفتگی نوشتی ممکنه متغیر باشه،
-                # اما مهم اینه که روی لیست جوایز (Rewards) حلقه می‌زنی:
+                zone = mission.get("zone", "Unknown")
+                name = mission.get("name", "Mission")
+                pl = mission.get("powerLevel", 0)
+                
+                # بررسی جوایز هشدار برای پیدا کردن جوایز هفتگی مهم (سوپرشارژرها و کور ری‌پرك)
                 for r in mission.get("alertRewards", []):
                     item_type = str(r.get("itemType", "")).upper()
                     qty = r.get("quantity", 1)
                     
-                    # ---- این تیکه رو برای تعیین آیکون اضافه می‌کنیم ----
-                    if "SUPERCHARGER" in item_type:
-                        item_icon = "🚀"
-                    elif "RE-PERK" in item_type or "PERK" in item_type:
-                        item_icon = "🛠️"
-                    elif "SURVIVOR" in item_type:
-                        item_icon = "👥"
-                    else:
-                        item_icon = "🎁"
-                    # --------------------------------------------------
-                    
-                    reward_str = (
-                        f"🛠️ **Weekly Reset Reward**\n"
-                        f"{item_icon} `{item_type}` `x{qty}`\n"
-                        f"───────────────────"
-                    )
-                    if reward_str not in rewards_found:
-                        rewards_found.append(reward_str)
-                        
-        final_message = "🛠️ **This Week's Reset Rewards:**\n\n"
+                    # فیلتر ترکیبی: هم سوپرشارژرها و هم Core Re-perk / Re-perk
+                    if "SUPERCHARGER" in item_type or "REPERK" in item_type or "RE-PERK" in item_type:
+                        if "HERO" in item_type:
+                            item_icon = "🦸‍♂️"
+                        elif "WEAPON" in item_type:
+                            item_icon = "⚔️"
+                        elif "TRAP" in item_type:
+                            item_icon = "🧩"
+                        elif "SURVIVOR" in item_type:
+                            item_icon = "👥"
+                        elif "CORE" in item_type or "REPERK" in item_type or "RE-PERK" in item_type:
+                            item_icon = "🛠️"
+                        else:
+                            item_icon = "🚀"
+                            
+                        reward_str = (
+                            f"🌍 **{zone}**\n"
+                            f"{item_icon} `{item_type}` `x{qty}`\n"
+                            f"⚡ Power {pl} | `{name}`\n"
+                            f"───────────────────"
+                        )
+                        if reward_str not in rewards_found:
+                            rewards_found.append(reward_str)
+                            
+        final_message = "🛠️ **This Week's Reset Rewards & Superchargers:**\n\n"
         if rewards_found:
             final_message += "\n".join(rewards_found)
         else:
-            final_message += "❌ No weekly reset rewards found today.\n"
+            final_message += "❌ No weekly reset rewards found at this time.\n"
             
         return final_message
     except Exception as e:
