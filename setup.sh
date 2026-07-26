@@ -163,17 +163,42 @@ def get_weekly_superchargers():
                     if "SUPERCHARGER" in cleaned_text.upper() or len(cleaned_text) > 3:
                         weekly_found.append(cleaned_text)
                         
-        final_message = "🛠 **This Week's Superchargers:**\n\n"
+        def get_weekly_superchargers():
+    url = "https://fortnitedb.com/"
+    scraper = cloudscraper.create_scraper()
+    try:
+        response = scraper.get(url, timeout=10)
+        response.raise_for_status()
+        soup = BeautifulSoup(response.text, 'html.parser')
+        
+        weekly_found = []
+        for element in soup.find_all(True):
+            text = element.get_text(separator=" ", strip=True)
+            text_upper = text.upper()
+            
+            # جستجو برای سوپرشارژرها و کور ریپرک
+            if "SUPERCHARGER" in text_upper or "CORE REPERK" in text_upper or "REPERK" in text_upper:
+                if len(text) < 60:
+                    cleaned_text = text.replace("Weekly Supercharger", "").strip()
+                    if not cleaned_text:
+                        cleaned_text = text
+                    weekly_found.append(cleaned_text)
+                        
+        final_message = "🛠 **This Week's Reward:**\n\n"
         valid_items = []
+        
         for item in weekly_found:
-            if "survivor" in item.lower() and "Survivor Supercharger" not in valid_items:
+            item_lower = item.lower()
+            if "survivor" in item_lower and "Survivor Supercharger" not in valid_items:
                 valid_items.append("Survivor Supercharger")
-            elif "hero" in item.lower() and "Hero Supercharger" not in valid_items:
+            elif "hero" in item_lower and "Hero Supercharger" not in valid_items:
                 valid_items.append("Hero Supercharger")
-            elif "defender" in item.lower() and "Defender Supercharger" not in valid_items:
+            elif "defender" in item_lower and "Defender Supercharger" not in valid_items:
                 valid_items.append("Defender Supercharger")
-            elif "weapon" in item.lower() and "Weapon Supercharger" not in valid_items:
+            elif "weapon" in item_lower and "Weapon Supercharger" not in valid_items:
                 valid_items.append("Weapon Supercharger")
+            elif "core reperk" in item_lower and "Core Reperk" not in valid_items:
+                valid_items.append("Core Reperk")
                 
         if valid_items:
             for item in valid_items:
