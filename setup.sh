@@ -192,9 +192,11 @@ def get_weekly_superchargers():
         return f"❌ Error fetching FortniteDB Weekly: {e}"
 EOF
 
-# Creating vbucks_bot.py (with commented proxy)
+# Creating vbucks_bot.py (Max 200 users, no photo)
 cat << 'EOF' > /root/fortnite_bot/vbucks_bot.py
 import logging
+import json
+import os
 from datetime import time, timezone
 from telegram import Update, ReplyKeyboardMarkup, KeyboardButton
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, MessageHandler, filters
@@ -210,13 +212,30 @@ logging.basicConfig(
 # Proxy settings (commented by default)
 # PROXY_URL = "socks5://username:password@127.0.0.1:port"
 
-USER_CHAT_ID = None
+USERS_FILE = "/root/fortnite_bot/users.json"
+MAX_USERS = 200
 
 from vbucks_scraper import get_vbucks_missions, get_160_missions, get_weekly_superchargers
 
+def load_users():
+    if os.path.exists(USERS_FILE):
+        with open(USERS_FILE, "r") as f:
+            return set(json.load(f))
+    return set()
+
+def save_user(chat_id):
+    users = load_users()
+    if chat_id not in users:
+        # ذخیره نهایتاً 200 کاربر
+        if len(users) >= MAX_USERS:
+            return
+        users.add(chat_id)
+        with open(USERS_FILE, "w") as f:
+            json.dump(list(users), f)
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    global USER_CHAT_ID
-    USER_CHAT_ID = update.effective_chat.id
+    chat_id = update.effective_chat.id
+    save_user(chat_id)
     
     keyboard = [
         [KeyboardButton("💎 V-Bucks Missions"), KeyboardButton("⚡ Power 160 Missions")],
@@ -224,15 +243,15 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
     reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
     welcome_text = (
-        "Hello! 🎮\n"
-        "Welcome to Fortnite Monitoring Bot By Sadeq Irani.\n"
-        "Your chat ID is saved automatically. You will receive notifications here!"
+        "An easy way to get daily V-Bucks, PL 160 missions, and weekly reward information for high-level STW players.\n\n"
+        "Your chat ID is saved automatically. You will receive daily and weekly notifications here!"
     )
+    
     await update.message.reply_text(welcome_text, reply_markup=reply_markup)
 
 async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    global USER_CHAT_ID
-    USER_CHAT_ID = update.effective_chat.id
+    chat_id = update.effective_chat.id
+    save_user(chat_id)
     text = update.message.text
     
     if text == "💎 V-Bucks Missions":
@@ -249,8 +268,8 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(data, parse_mode="Markdown")
 
 async def daily_reset_notification(context: ContextTypes.DEFAULT_TYPE):
-    global USER_CHAT_ID
-    if not USER_CHAT_ID:
+    users = load_users()
+    if not users:
         return
     try:
         vbucks_data = get_vbucks_missions()
@@ -261,13 +280,17 @@ async def daily_reset_notification(context: ContextTypes.DEFAULT_TYPE):
             f"{vbucks_data}\n\n"
             f"{missions_160_data}"
         )
-        await context.bot.send_message(chat_id=USER_CHAT_ID, text=message, parse_mode="Markdown")
+        for chat_id in users:
+            try:
+                await context.bot.send_message(chat_id=chat_id, text=message, parse_mode="Markdown")
+            except Exception as e:
+                print(f"Failed to send daily notification to {chat_id}: {e}")
     except Exception as e:
-        print(f"Error in daily notification: {e}")
+        print(f"Error in daily notification data fetch: {e}")
 
 async def weekly_reset_notification(context: ContextTypes.DEFAULT_TYPE):
-    global USER_CHAT_ID
-    if not USER_CHAT_ID:
+    users = load_users()
+    if not users:
         return
     if context.job.datetime.weekday() == 2:  # Wednesdays
         try:
@@ -277,9 +300,13 @@ async def weekly_reset_notification(context: ContextTypes.DEFAULT_TYPE):
                 "-----------------------------------\n\n"
                 f"{weekly_data}"
             )
-            await context.bot.send_message(chat_id=USER_CHAT_ID, text=message, parse_mode="Markdown")
+            for chat_id in users:
+                try:
+                    await context.bot.send_message(chat_id=chat_id, text=message, parse_mode="Markdown")
+                except Exception as e:
+                    print(f"Failed to send weekly notification to {chat_id}: {e}")
         except Exception as e:
-            print(f"Error in weekly notification: {e}")
+            print(f"Error in weekly notification data fetch: {e}")
 
 if __name__ == '__main__':
     # Uncomment if proxy is needed:
@@ -287,7 +314,7 @@ if __name__ == '__main__':
     # application = ApplicationBuilder().token("YOUR_TOKEN_PLACEHOLDER").request(t_request).get_updates_request(t_request).build()
 
     import os
-    TOKEN = os.environ.get("BOT_TOKEN")
+    TOKEN = os.environ.get("BOT_TOKEN", "YOUR_TOKEN_PLACEHOLDER")
     
     application = ApplicationBuilder().token(TOKEN).build()
 
@@ -304,7 +331,6 @@ EOF
 
 # Injecting the dynamically read token into the file securely
 sed -i "s/YOUR_TOKEN_PLACEHOLDER/$BOT_TOKEN/g" /root/fortnite_bot/vbucks_bot.py
-sed -i "/TOKEN = os.environ/c\    TOKEN = \"$BOT_TOKEN\"" /root/fortnite_bot/vbucks_bot.py
 
 
 echo "[4/5] Setting up Systemd service for permanent execution..."
