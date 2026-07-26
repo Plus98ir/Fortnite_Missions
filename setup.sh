@@ -221,13 +221,12 @@ def get_weekly_superchargers():
                 name = mission.get("name", "Mission")
                 pl = mission.get("powerLevel", 0)
                 
-                # بررسی جوایز هشدار برای پیدا کردن جوایز هفتگی مهم (سوپرشارژرها و کور ری‌پرك)
                 for r in mission.get("alertRewards", []):
                     item_type = str(r.get("itemType", "")).upper()
                     qty = r.get("quantity", 1)
                     
-                    # فیلتر ترکیبی: هم سوپرشارژرها و هم Core Re-perk / Re-perk
-                    if "SUPERCHARGER" in item_type or "REPERK" in item_type or "RE-PERK" in item_type:
+                    # فیلتر اصلاح‌شده: فقط سوپرشارژرها و کُر ری‌پرك (باید حتماً کلمه CORE رو داشته باشه)
+                    if "SUPERCHARGER" in item_type or ("CORE" in item_type and "PERK" in item_type):
                         if "HERO" in item_type:
                             item_icon = "🦸‍♂️"
                         elif "WEAPON" in item_type:
@@ -236,7 +235,7 @@ def get_weekly_superchargers():
                             item_icon = "🧩"
                         elif "SURVIVOR" in item_type:
                             item_icon = "👥"
-                        elif "CORE" in item_type or "REPERK" in item_type or "RE-PERK" in item_type:
+                        elif "CORE" in item_type:
                             item_icon = "🛠️"
                         else:
                             item_icon = "🚀"
