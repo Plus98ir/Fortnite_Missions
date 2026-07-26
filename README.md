@@ -35,26 +35,27 @@ Before installing the bot, you need to create a Telegram bot via BotFather:
 ### 🚀 Step 2: Installation & Configuration
 You can easily install and configure the bot using our automated installation script:
 
-Note: Configuration for Iranian Servers
+**Note: Configuration for Iranian Servers**
 
 If you are hosting the bot on an Iranian server, you will need to configure a proxy. Please follow these steps:
 
-1. Set the Proxy URL
+**1. Set the Proxy URL**
 Open the bot file using your text editor:
-
-
+```bash
 nano /root/fortnite_bot/vbucks_bot.py
-Locate the PROXY_URL variable, enter your proxy details, and uncomment the line by removing the #:
-
-
+```
+Locate the `PROXY_URL` variable, enter your proxy details, and uncomment the line by removing the `#`:
+```python
 PROXY_URL = "socks5://username:password@127.0.0.1:port"
-2. Enable the Proxy in the Application
-Scroll down to the if __name__ == '__main__': section and uncomment the following three lines to apply the proxy settings:
+```
 
-
+**2. Enable the Proxy in the Application**
+Scroll down to the `if __name__ == '__main__':` section and uncomment the following three lines to apply the proxy settings:
+```python
 # Uncomment if proxy is needed:
 t_request = HTTPXRequest(proxy=PROXY_URL)
-application = ApplicationBuilder().token(TOKEN).request(t_request).get_updates_request(t_request).
+application = ApplicationBuilder().token(TOKEN).request(t_request).get_updates_request(t_request).build()
+```
 
 
 
