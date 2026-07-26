@@ -14,8 +14,8 @@ A smart, lightweight Telegram bot designed to instantly fetch and notify players
 
 ### 📋 Features
 * **Real-Time V-Bucks Alerts:** Automatically detects and notifies when daily missions offer V-Bucks.
-* Supercharger Alerts: Instantly track and get notified when weekly missions or alert resets offer Hero, Survivor, Weapon, or Trap Superchargers.
-* High-Value Rewards: Never miss out on rare weekly progression items and top-tier upgrades.
+* **Supercharger Alerts:** Instantly track and get notified when weekly missions or alert resets offer Hero, Survivor, Weapon, or Trap Superchargers.
+* **Weekly Rewards:** Never miss out on rare weekly progression items and top-tier upgrades.
 * **160 PL Mission Tracker:** Easily check high-tier PL 160 missions, zone modifiers, and supercharger rewards.
 * **Interactive Setup Script:** Quick automated installation via a single terminal command, prompting for your Bot Token.
 * **Fast & Lightweight:** Built for minimal resource consumption and instant response times.
