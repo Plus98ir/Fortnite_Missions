@@ -1,9 +1,35 @@
-read -p "لطفاً توکن ربات تلگرام خود را وارد کنید (مثلاً 123456:ABC-DEF...): " BOT_TOKEN && \
-read -p "لطفاً چت آیدی عددی خود یا کانال برای دریافت نوتیفیکیشن را وارد کنید (مثلاً 123456789 یا @YourChannel): " CHAT_ID && \
-apt update && apt install python3-requests python3-bs4 -y && pip3 install requests beautifulsoup4 python-telegram-bot --break-system-packages && cat << 'EOF' > /root/vbucks_scraper.py
+#!/bin/bash
+
+clear
+echo "===================================================="
+echo "    Fortnite Telegram Bot - Automated Installer     "
+echo "===================================================="
+echo ""
+
+# پرسیدن توکن ربات به صورت مخفی
+read -s -p "لطفاً API Token ربات تلگرام خود را وارد کنید (مخفی): " BOT_TOKEN
+echo ""
+
+if [ -z "$BOT_TOKEN" ]; then
+    echo "❌ توکن وارد نشد! عملیات متوقف شد."
+    exit 1
+fi
+
+echo "[1/5] در حال بروزرسانی پکیج‌ها و نصب پیش‌نیازها..."
+apt update && apt install -y python3 python3-pip python3-requests python3-bs4 git
+
+echo "[2/5] در حال نصب کتابخانه‌های پایتون (Telegram, Cloudscraper)..."
+pip3 install requests beautifulsoup4 cloudscraper "python-telegram-bot[job-queue]" --break-system-packages
+
+echo "[3/5] در حال ساخت فایل‌های ربات در پوشه /root/fortnite_bot ..."
+mkdir -p /root/fortnite_bot
+
+# ساخت فایل vbucks_scraper.py
+cat << 'EOF' > /root/fortnite_bot/vbucks_scraper.py
+import cloudscraper
+from bs4 import BeautifulSoup
 import requests
 import json
-from bs4 import BeautifulSoup
 
 def get_vbucks_missions():
     url = "https://freethevbucks.com/timed-missions/"
@@ -115,48 +141,98 @@ def get_160_missions():
         return final_message
     except Exception as e:
         return f"❌ Error fetching 160 missions: {e}"
+
+def get_weekly_superchargers():
+    url = "https://fortnitedb.com/"
+    scraper = cloudscraper.create_scraper()
+    try:
+        response = scraper.get(url, timeout=10)
+        response.raise_for_status()
+        soup = BeautifulSoup(response.text, 'html.parser')
+        
+        weekly_found = []
+        for element in soup.find_all(True):
+            text = element.get_text(separator=" ", strip=True)
+            text_upper = text.upper()
+            
+            if "SUPERCHARGER" in text_upper:
+                if len(text) < 60:
+                    cleaned_text = text.replace("Weekly Supercharger", "").strip()
+                    if not cleaned_text:
+                        cleaned_text = text
+                    if "SUPERCHARGER" in cleaned_text.upper() or len(cleaned_text) > 3:
+                        weekly_found.append(cleaned_text)
+                        
+        final_message = "🛠 **This Week's Superchargers:**\n\n"
+        valid_items = []
+        for item in weekly_found:
+            if "survivor" in item.lower() and "Survivor Supercharger" not in valid_items:
+                valid_items.append("Survivor Supercharger")
+            elif "hero" in item.lower() and "Hero Supercharger" not in valid_items:
+                valid_items.append("Hero Supercharger")
+            elif "defender" in item.lower() and "Defender Supercharger" not in valid_items:
+                valid_items.append("Defender Supercharger")
+            elif "weapon" in item.lower() and "Weapon Supercharger" not in valid_items:
+                valid_items.append("Weapon Supercharger")
+                
+        if valid_items:
+            for item in valid_items:
+                final_message += f"🎁 {item}\n"
+        else:
+            unique_items = list(dict.fromkeys(weekly_found))
+            for item in unique_items[:3]:
+                final_message += f"🎁 {item}\n"
+            
+        return final_message
+    except Exception as e:
+        return f"❌ Error fetching FortniteDB Weekly: {e}"
 EOF
 
-cat << EOF > /root/vbucks_bot.py
+# ساخت فایل vbucks_bot.py (با پروکسی کامنت‌شده)
+cat << EOF > /root/fortnite_bot/vbucks_bot.py
 import logging
 from datetime import time, timezone
 from telegram import Update, ReplyKeyboardMarkup, KeyboardButton
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, MessageHandler, filters
 
-# اگر خواستید در آینده پروکسی را فعال کنید، خط زیر را از حالت کامنت خارج کنید:
+# اگر در ایران هستید و به پروکسی نیاز داشتید، خط زیر را از حالت کامنت خارج کنید:
 # from telegram.request import HTTPXRequest
 
-# تنظیمات لاگ‌گیری
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
 )
 
-# توکن ربات تلگرام (توسط اسکریپت نصب شد)
 TOKEN = "$BOT_TOKEN"
 
-# چت آیدی مقصد برای دریافت نوتیفیکیشن خودکار
-NOTIFICATION_CHAT_ID = "$CHAT_ID"
+# تنظیمات پروکسی (پیش‌فرض کامنت است)
+# PROXY_URL = "socks5://username:password@127.0.0.1:port"
 
-# تنظیمات پروکسی (فعلا کامنت است)
-# PROXY_URL = "socks5://5oir1q2j:8wiogugrlggs@127.0.0.1:45248"
+USER_CHAT_ID = None
 
-from vbucks_scraper import get_vbucks_missions, get_160_missions
+from vbucks_scraper import get_vbucks_missions, get_160_missions, get_weekly_superchargers
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    global USER_CHAT_ID
+    USER_CHAT_ID = update.effective_chat.id
+    
     keyboard = [
-        [KeyboardButton("💎 V-Bucks Missions"), KeyboardButton("⚡ Power 160 Missions")]
+        [KeyboardButton("💎 V-Bucks Missions"), KeyboardButton("⚡ Power 160 Missions")],
+        [KeyboardButton("🛠 Weekly Superchargers")]
     ]
     reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
     welcome_text = (
         "Hello! 🎮\n"
         "Welcome to Fortnite Monitoring Bot By Sadeq Irani.\n"
-        "Please select an option below:"
+        "Your chat ID is saved automatically. You will receive notifications here!"
     )
     await update.message.reply_text(welcome_text, reply_markup=reply_markup)
 
 async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    global USER_CHAT_ID
+    USER_CHAT_ID = update.effective_chat.id
     text = update.message.text
+    
     if text == "💎 V-Bucks Missions":
         await update.message.reply_text("Fetching V-Bucks missions...")
         data = get_vbucks_missions()
@@ -165,48 +241,63 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("Fetching Power 160 missions...")
         data = get_160_missions()
         await update.message.reply_text(data, parse_mode="Markdown")
+    elif text == "🛠 Weekly Superchargers":
+        await update.message.reply_text("Fetching Weekly Superchargers...")
+        data = get_weekly_superchargers()
+        await update.message.reply_text(data, parse_mode="Markdown")
 
-# ارسال خودکار نوتیفیکیشن در زمان ریست روزانه (00:00 UTC / 3:30 ایران)
 async def daily_reset_notification(context: ContextTypes.DEFAULT_TYPE):
+    global USER_CHAT_ID
+    if not USER_CHAT_ID:
+        return
     try:
         vbucks_data = get_vbucks_missions()
         missions_160_data = get_160_missions()
         message = (
-            "🔔 **Fortnite Daily Reset & Shop Update!** 🛒\n"
+            "🔔 **Fortnite Daily Reset Update!** 🛒\n"
             "-----------------------------------\n\n"
             f"{vbucks_data}\n\n"
             f"{missions_160_data}"
         )
-        await context.bot.send_message(
-            chat_id=NOTIFICATION_CHAT_ID,
-            text=message,
-            parse_mode="Markdown"
-        )
+        await context.bot.send_message(chat_id=USER_CHAT_ID, text=message, parse_mode="Markdown")
     except Exception as e:
         print(f"Error in daily notification: {e}")
 
+async def weekly_reset_notification(context: ContextTypes.DEFAULT_TYPE):
+    global USER_CHAT_ID
+    if not USER_CHAT_ID:
+        return
+    if context.job.datetime.weekday() == 2:  # چهارشنبه‌ها
+        try:
+            weekly_data = get_weekly_superchargers()
+            message = (
+                "🚨 **Fortnite Weekly Reset & Superchargers!** 🛠\n"
+                "-----------------------------------\n\n"
+                f"{weekly_data}"
+            )
+            await context.bot.send_message(chat_id=USER_CHAT_ID, text=message, parse_mode="Markdown")
+        except Exception as e:
+            print(f"Error in weekly notification: {e}")
+
 if __name__ == '__main__':
-    # حالت پروکسی (برای استفاده بعدی کافیست کامنت این بخش را بردارید):
+    # اگر از پروکسی استفاده می‌کنید، کامنت این بخش را بردارید:
     # t_request = HTTPXRequest(proxy=PROXY_URL)
     # application = ApplicationBuilder().token(TOKEN).request(t_request).get_updates_request(t_request).build()
 
-    # حالت مستقیم (فعلی)
     application = ApplicationBuilder().token(TOKEN).build()
 
-    # تنظیم زمان‌سنج برای اجرای خودکار روزانه رأس ساعت 00:00 UTC (3:30 بامداد ایران)
     job_queue = application.job_queue
-    job_queue.run_daily(
-        daily_reset_notification,
-        time=time(hour=0, minute=0, tzinfo=timezone.utc)
-    )
+    job_queue.run_daily(daily_reset_notification, time=time(hour=0, minute=0, tzinfo=timezone.utc))
+    job_queue.run_daily(weekly_reset_notification, time=time(hour=0, minute=0, tzinfo=timezone.utc))
 
     application.add_handler(CommandHandler("start", start))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_handler))
 
-    print("🤖 Telegram Bot with Daily UTC Reset Notification is running...")
+    print("🤖 Telegram Bot is running...")
     application.run_polling()
 EOF
 
+echo "[4/5] در حال تنظیم Systemd Service برای اجرای دائمی ربات..."
 cat << 'EOF' > /etc/systemd/system/vbucksbot.service
 [Unit]
 Description=Fortnite Monitoring Telegram Bot
@@ -215,8 +306,8 @@ After=network.target
 [Service]
 Type=simple
 User=root
-WorkingDirectory=/root
-ExecStart=/usr/bin/python3 /root/vbucks_bot.py
+WorkingDirectory=/root/fortnite_bot
+ExecStart=/usr/bin/python3 /root/fortnite_bot/vbucks_bot.py
 Restart=always
 RestartSec=5
 
@@ -224,7 +315,13 @@ RestartSec=5
 WantedBy=multi-user.target
 EOF
 
+echo "[5/5] فعال‌سازی و استارت سرویس..."
 systemctl daemon-reload
 systemctl enable vbucksbot.service
 systemctl restart vbucksbot.service
-echo "✅ ربات با موفقیت نصب شد، توکن و چت آیدی ست شد و سرویس فعال گردید!"
+
+echo ""
+echo "===================================================="
+echo " ✅ ربات با موفقیت نصب و روشن شد!"
+echo " وضعیت سرویس: systemctl status vbucksbot.service"
+echo "===================================================="
