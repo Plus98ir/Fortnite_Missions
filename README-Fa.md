@@ -36,11 +36,7 @@
 می‌توانید به راحتی با استفاده از اسکریپت نصب خودکار، ربات را راه‌اندازی کنید:
 
 Bash
-bash <(curl -s [https://raw.githubusercontent.com/Sadiqira/Fortnite_Missions/refs/heads/main/setup.sh](https://raw.githubusercontent.com/Sadiqira/Fortnite_Missions/refs/heads/main/setup.sh))
-(روش جایگزین با wget):
-
-Bash
-bash <(wget -qO- [https://raw.githubusercontent.com/Sadiqira/Fortnite_Missions/refs/heads/main/setup.sh](https://raw.githubusercontent.com/Sadiqira/Fortnite_Missions/refs/heads/main/setup.sh))
+bash <(curl -s https://raw.githubusercontent.com/Sadiqira/Fortnite_Missions/refs/heads/main/setup.sh)
 در طول فرآیند نصب، اسکریپت به صورت تعاملی از شما می‌خواهد توکن ربات تلگرام خود را وارد کنید:
 
 👉 لطفاً توکن ربات تلگرام خود را وارد کنید: [توکن خود را اینجا پیست کنید]
