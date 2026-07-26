@@ -70,5 +70,5 @@ systemctl restart vbucksbot.service
 @plus98vbucks_bot
 ```
 * The default capacity is set to 200 users for mission notifications.
-* To modify this limit on your server, edit the script using **nano /root/fortnite_bot/vbucks_bot.py**,
+* To modify this limit on your server, edit the script using (**nano /root/fortnite_bot/vbucks_bot.py**)
 * locate the **MAX_USERS = 200** variable, and adjust it to your desired number.
