@@ -218,7 +218,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     keyboard = [
         [KeyboardButton("💎 V-Bucks Missions"), KeyboardButton("⚡ Power 160 Missions")],
-        [KeyboardButton("🛠 Weekly Superchargers")]
+        [KeyboardButton("🛠 Weekly Reward")]
     ]
     reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
     welcome_text = (
@@ -241,8 +241,8 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("Fetching Power 160 missions...")
         data = get_160_missions()
         await update.message.reply_text(data, parse_mode="Markdown")
-    elif text == "🛠 Weekly Superchargers":
-        await update.message.reply_text("Fetching Weekly Superchargers...")
+    elif text == "🛠 Weekly Reward":
+        await update.message.reply_text("Fetching Weekly Reward...")
         data = get_weekly_superchargers()
         await update.message.reply_text(data, parse_mode="Markdown")
 
