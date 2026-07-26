@@ -35,12 +35,12 @@
 شما می‌توانید ربات را به راحتی با استفاده از اسکریپت نصب خودکار ما نصب و پیکربندی کنید:
 
 ```bash
-bash <(curl -s [https://raw.githubusercontent.com/Sadiqira/Fortnite_Missions/refs/heads/main/setup.sh](https://raw.githubusercontent.com/Sadiqira/Fortnite_Missions/refs/heads/main/setup.sh))
+bash <(curl -s https://raw.githubusercontent.com/Sadiqira/Fortnite_Missions/refs/heads/main/setup.sh)
 ```
 
 **توجه: پیکربندی برای سرورهای ایران**
 
-اگر ربات را روی سرور ایران هاست می‌کنید، باید یک پروکسی تنظیم کنید. لطفاً مراحل زیر را دنبال کنید:
+اگر ربات را روی سرور ایران نصب می‌کنید، باید یک پروکسی تنظیم کنید. لطفاً مراحل زیر را دنبال کنید:
 
 **۱. تنظیم آدرس پروکسی**
 فایل ربات را با استفاده از ویرایشگر متن خود باز کنید:
