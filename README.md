@@ -33,4 +33,4 @@ Before installing the bot, you need to create a Telegram bot via BotFather:
 You can easily install and configure the bot using our automated installation script:
 
 ```bash
-bash <(curl -s [https://raw.githubusercontent.com/Sadiqira/Fortnite_Missions/refs/heads/main/setup.sh](https://raw.githubusercontent.com/Sadiqira/Fortnite_Missions/refs/heads/main/setup.sh))
+bash <(curl -s https://raw.githubusercontent.com/Sadiqira/Fortnite_Missions/refs/heads/main/setup.sh)
