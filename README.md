@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🤖 Fortnite StW Alert & V-Bucks Telegram Bot
+# 🤖 Fortnite StW Alert Weekly Reward & V-Bucks & 160PL Mission Tracker Telegram Bot
 
 A smart, lightweight Telegram bot designed to instantly fetch and notify players about Fortnite Save the World (STW) Weekly Reward & 160PL missions and daily V-Bucks alerts.
 
