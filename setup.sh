@@ -155,27 +155,6 @@ def get_weekly_superchargers():
             text = element.get_text(separator=" ", strip=True)
             text_upper = text.upper()
             
-            if "SUPERCHARGER" in text_upper:
-                if len(text) < 60:
-                    cleaned_text = text.replace("Weekly Supercharger", "").strip()
-                    if not cleaned_text:
-                        cleaned_text = text
-                    if "SUPERCHARGER" in cleaned_text.upper() or len(cleaned_text) > 3:
-                        weekly_found.append(cleaned_text)
-                        
-        def get_weekly_superchargers():
-    url = "https://fortnitedb.com/"
-    scraper = cloudscraper.create_scraper()
-    try:
-        response = scraper.get(url, timeout=10)
-        response.raise_for_status()
-        soup = BeautifulSoup(response.text, 'html.parser')
-        
-        weekly_found = []
-        for element in soup.find_all(True):
-            text = element.get_text(separator=" ", strip=True)
-            text_upper = text.upper()
-            
             # جستجو برای سوپرشارژرها و کور ریپرک
             if "SUPERCHARGER" in text_upper or "CORE REPERK" in text_upper or "REPERK" in text_upper:
                 if len(text) < 60:
@@ -214,7 +193,7 @@ def get_weekly_superchargers():
 EOF
 
 # Creating vbucks_bot.py (with commented proxy)
-cat << EOF > /root/fortnite_bot/vbucks_bot.py
+cat << 'EOF' > /root/fortnite_bot/vbucks_bot.py
 import logging
 from datetime import time, timezone
 from telegram import Update, ReplyKeyboardMarkup, KeyboardButton
@@ -227,8 +206,6 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
 )
-
-TOKEN = "$BOT_TOKEN"
 
 # Proxy settings (commented by default)
 # PROXY_URL = "socks5://username:password@127.0.0.1:port"
@@ -307,8 +284,11 @@ async def weekly_reset_notification(context: ContextTypes.DEFAULT_TYPE):
 if __name__ == '__main__':
     # Uncomment if proxy is needed:
     # t_request = HTTPXRequest(proxy=PROXY_URL)
-    # application = ApplicationBuilder().token(TOKEN).request(t_request).get_updates_request(t_request).build()
+    # application = ApplicationBuilder().token("YOUR_TOKEN_PLACEHOLDER").request(t_request).get_updates_request(t_request).build()
 
+    import os
+    TOKEN = os.environ.get("BOT_TOKEN")
+    
     application = ApplicationBuilder().token(TOKEN).build()
 
     job_queue = application.job_queue
@@ -321,6 +301,11 @@ if __name__ == '__main__':
     print("🤖 Telegram Bot is running...")
     application.run_polling()
 EOF
+
+# Injecting the dynamically read token into the file securely
+sed -i "s/YOUR_TOKEN_PLACEHOLDER/$BOT_TOKEN/g" /root/fortnite_bot/vbucks_bot.py
+sed -i "/TOKEN = os.environ/c\    TOKEN = \"$BOT_TOKEN\"" /root/fortnite_bot/vbucks_bot.py
+
 
 echo "[4/5] Setting up Systemd service for permanent execution..."
 cat << 'EOF' > /etc/systemd/system/vbucksbot.service
