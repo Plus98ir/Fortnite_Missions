@@ -19,6 +19,7 @@ A smart, lightweight Telegram bot designed to instantly fetch and notify players
 * **160 PL Mission Tracker:** Easily check high-tier PL 160 missions, zone modifiers, and supercharger rewards.
 * **Interactive Setup Script:** Quick automated installation via a single terminal command, prompting for your Bot Token.
 * **Fast & Lightweight:** Built for minimal resource consumption and instant response times.
+* **Send Notification 1 Min after shop updated**
 
 ### ⚙️ Step 1: Get Your Telegram Bot Token
 Before installing the bot, you need to create a Telegram bot via BotFather:
