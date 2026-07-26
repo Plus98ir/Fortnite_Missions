@@ -211,7 +211,7 @@ def get_weekly_superchargers():
                         cleaned_text = text
                     weekly_found.append(cleaned_text)
                         
-        final_message = "🛠️ **This Week's 160 Quest Reward:**\n\n"
+        final_message = "🛠 **This Week's Reward:**\n\n"
         valid_items = []
         
         for item in weekly_found:
@@ -226,12 +226,12 @@ def get_weekly_superchargers():
                 valid_items.append("Weapon Supercharger")
             elif "trap" in item_lower and "Trap Supercharger" not in valid_items:
                 valid_items.append("Trap Supercharger")
-            elif "core reperk" in item_lower and "Core Re-perk" not in valid_items:
-                valid_items.append("Core Re-perk")
+            elif "core reperk" in item_lower and "Core Reperk" not in valid_items:
+                valid_items.append("Core Reperk")
                 
         if valid_items:
             for item in valid_items:
-                # تعیین آیکون فابریک بر اساس نام آیتم
+                # تعیین دقیق آیکون کاستوم بر اساس نام آیتم
                 item_upper = item.upper()
                 if "HERO" in item_upper:
                     item_icon = "🦸‍♂️"
@@ -243,25 +243,19 @@ def get_weekly_superchargers():
                     item_icon = "👥"
                 elif "DEFENDER" in item_upper:
                     item_icon = "🛡️"
-                elif "CORE" in item_upper or "RE-PERK" in item_upper:
+                elif "CORE" in item_upper or "REPERK" in item_upper:
                     item_icon = "🛠️"
                 else:
                     item_icon = "🚀"
                     
-                # چیدمان مرتب مشابه مأموریت‌های وی‌باکس
-                final_message += (
-                    f"{item_icon} `{item}`\n"
-                    f"───────────────────\n"
-                )
+                # ظاهر ساده و تمیز همراه با آیکون جدید
+                final_message += f"{item_icon} **{item}**\n\n"
         else:
             unique_items = list(dict.fromkeys(weekly_found))
             for item in unique_items[:3]:
-                final_message += (
-                    f"🎁 `{item}`\n"
-                    f"───────────────────\n"
-                )
+                final_message += f"🎁 **{item}**\n\n"
             
-        return final_message
+        return final_message.strip()
     except Exception as e:
         return f"❌ Error fetching FortniteDB Weekly: {e}"
 EOF
