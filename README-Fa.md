@@ -1,8 +1,4 @@
-🤖 ربات تلگرام هشدار و وی‌باکس نجات جهان فورتناایت
-ربات هوشمند و سبک تلگرام برای دریافت و اطلاع‌رسانی لحظه‌ای مأموریت‌های 160PL و وی‌باکس‌های روزانه.
-
-English Documentation | فارسی
-
+🇮🇷 راهنمای فارسی (Persian Documentation)
 📋 ویژگی‌ها و امکانات
 هشدار لحظه‌ای وی‌باکس: تشخیص و ارسال خودکار نوتیفیکیشن هنگام قرار گرفتن وی‌باکس در مأموریت‌های روزانه.
 
@@ -39,8 +35,6 @@ Plaintext
 
 Bash
 bash <(curl -s https://raw.githubusercontent.com/Sadiqira/Fortnite_Missions/refs/heads/main/setup.sh)
-(روش جایگزین با wget: bash <(wget -qO- [https://raw.githubusercontent.com/Sadiqira/Fortnite_Missions/refs/heads/main/setup.sh](https://raw.githubusercontent.com/Sadiqira/Fortnite_Missions/refs/heads/main/setup.sh)))
-
 در طول فرآیند نصب، اسکریپت به صورت تعاملی از شما می‌خواهد توکن ربات تلگرام خود را وارد کنید:
 
 Plaintext
