@@ -65,3 +65,6 @@ application = ApplicationBuilder().token(TOKEN).request(t_request).get_updates_r
 ```bash
 systemctl restart vbucksbot.service
 ```
+* **ضمنا**
+* اگر سرور ندارید یا حوصله نصب و راه‌اندازی آن را ندارید، می‌توانید از ربات من استفاده کنید. فقط در جریان باشید که نمی‌دانم این ربات تا چه زمانی فعال خواهد ماند:
+@plus98vbucks_bot
