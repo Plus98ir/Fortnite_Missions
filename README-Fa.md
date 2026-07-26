@@ -35,5 +35,30 @@
 می‌توانید به راحتی با استفاده از اسکریپت نصب خودکار، ربات را راه‌اندازی کنید:
 
 
+تنظیم پروکسی (مخصوص سرورهای ایران)
+اگر ربات را روی سرور ایران نصب می‌کنید و به دلیل تحریم‌ها یا فیلترینگ به تلگرام متصل نمی‌شود، باید پروکسی خود را در فایل کانفیگ وارد کنید:
+
+۱. فایل سورس ربات را با دستور زیر در ویرایشگر nano باز کنید:
+
+Bash
+nano /root/fortnite_bot/vbucks_bot.py
+۲. آدرس پروکسی خود را در قسمت مربوطه قرار داده و علامت کامنت (#) را از ابتدای آن بردارید:
+
+Python
+PROXY_URL = "socks5://username:password@127.0.0.1:port"
+۳. همچنین علامت کامنت را از خطوط مربوط به اعمال پروکسی در انتهای فایل بردارید تا به این شکل درآید:
+
+Python
+if __name__ == '__main__':
+    # Uncomment if proxy is needed:
+    t_request = HTTPXRequest(proxy=PROXY_URL)
+    application = ApplicationBuilder().token(TOKEN).request(t_request).get_updates_request(t_request).build()
+(برای ذخیره در nano دکمه‌های Ctrl + O و سپس Enter را بزنید، و برای خروج Ctrl + X را بزنید).
+
+۴. در نهایت برای اعمال تغییرات و راه‌اندازی مجدد ربات، دستور زیر را اجرا کنید:
+
+Bash
+systemctl restart vbucksbot.service
+
 ```bash
 bash <(curl -s https://raw.githubusercontent.com/Sadiqira/Fortnite_Missions/refs/heads/main/setup.sh)
