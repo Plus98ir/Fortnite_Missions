@@ -43,7 +43,6 @@ def get_vbucks_missions():
         soup = BeautifulSoup(response.text, 'html.parser')
         json_data = None
         
-        # استخراج دیتای منظم JSON از سایت
         for script in soup.find_all('script'):
             text = script.string
             if text and "powerLevel" in text:
@@ -69,10 +68,31 @@ def get_vbucks_missions():
                         pl = mission.get("powerLevel", 0)
                         qty = r.get("quantity", 50)
                         
-                        # فرمت‌دهی چند خطی و مرتب دقیقاً مشابه درخواست شما
+                        # انتخاب آیکون فابریک و اختصاصی بر اساس نوع مأموریت (دقیقاً شبیه خود بازی)
+                        name_upper = name.upper()
+                        if "RIDE THE LIGHTNING" in name_upper:
+                            mission_icon = "🚚"
+                        elif "CATEGORY" in name_upper or "STORM" in name_upper:
+                            mission_icon = "🌀"
+                        elif "RETRIVE" in name_upper or "RETRIEVE" in name_upper:
+                            mission_icon = "🎈"
+                        elif "FIGHT THE STORM" in name_upper:
+                            mission_icon = "⛈️"
+                        elif "BUILD THE RADAR" in name_upper:
+                            mission_icon = "📡"
+                        elif "EVACUATE THE SHELTER" in name_upper:
+                            mission_icon = "🏠"
+                        elif "REPAIR THE SHELTER" in name_upper:
+                            mission_icon = "🛠️"
+                        elif "DTB" in name_upper or "BOMB" in name_upper:
+                            mission_icon = "💣"
+                        else:
+                            mission_icon = "🎯"
+                        
+                        # چینش کامل و خط به خط مورد علاقه شما همراه با آیکون اختصاصی
                         mission_str = (
                             f"🌍 **{zone}**\n"
-                            f"📌 `{name}`\n"
+                            f"{mission_icon} `{name}`\n"
                             f"⚡ Power {pl}\n"
                             f"💎 {qty} V-Bucks\n"
                             f"───────────────────"
@@ -123,23 +143,44 @@ def get_160_missions():
                     zone = mission.get("zone", "Unknown")
                     name = mission.get("name", "Mission")
                     biome = mission.get("biome", "")
+                    
+                    # تعیین آیکون فابریک بر اساس نوع مأموریت ۱۶۰
+                    name_upper = name.upper()
+                    if "RIDE THE LIGHTNING" in name_upper:
+                        mission_icon = "🚚"
+                    elif "CATEGORY" in name_upper or "STORM" in name_upper:
+                        mission_icon = "🌀"
+                    elif "RETRIEVE" in name_upper:
+                        mission_icon = "🎈"
+                    elif "FIGHT THE STORM" in name_upper:
+                        mission_icon = "⛈️"
+                    elif "DTB" in name_upper or "BOMB" in name_upper:
+                        mission_icon = "💣"
+                    else:
+                        mission_icon = "⚡"
+
                     rewards_list = []
                     for r in mission.get("missionRewards", []):
                         rewards_list.append(f"▫️ {r.get('itemType')} `x{r.get('quantity')}`")
                     basic_str = "\n   ".join(rewards_list) if rewards_list else "None"
+                    
                     alert_list = []
                     for r in mission.get("alertRewards", []):
                         alert_list.append(f"▪️ {r.get('itemType')} `x{r.get('quantity')}`")
                     alert_str = "\n   ".join(alert_list) if alert_list else "None"
+                    
+                    # فرمت‌دهی چندخطی، مرتب و هماهنگ با وی‌باکس‌ها
                     mission_info = (
-                        f"⚡ **Power 160** | 🌍 **{zone}**\n"
-                        f"📌 **Type:** `{name}`\n"
-                        f"🗺 **Biome:** `{biome}`\n"
+                        f"🌍 **{zone}**\n"
+                        f"{mission_icon} `{name}`\n"
+                        f"⚡ Power {pl}\n"
+                        f"🗺 Biome: `{biome}`\n"
                         f"🎁 **Alert Rewards:**\n   {alert_str}\n"
                         f"📦 **Basic Rewards:**\n   {basic_str}\n"
                         f"───────────────────"
                     )
                     missions_found.append(mission_info)
+                    
         final_message = "⚡ **Today's Power 160 Missions:**\n\n"
         if missions_found:
             final_message += "\n".join(missions_found)
