@@ -65,6 +65,7 @@ application = ApplicationBuilder().token(TOKEN).request(t_request).get_updates_r
 systemctl restart vbucksbot.service
 ```
 * **Also**
-* If you don't have a server or prefer to skip the installation and setup process, you can use my bot. Just a heads-up, I am not sure how long it will remain active: 
+* If you don't have a server or prefer to skip the installation and setup process, you can use my bot. Just a heads-up, I am not sure how long it will remain active:
+* The default capacity is set to 200 users for mission notifications. To modify this limit on your server, edit the script using nano /root/fortnite_bot/vbucks_bot.py, locate the MAX_USERS = 200 variable, and adjust it to your desired number.
 ```python
 @plus98vbucks_bot
