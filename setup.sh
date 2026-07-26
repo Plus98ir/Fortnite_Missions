@@ -32,53 +32,60 @@ import requests
 import json
 
 def get_vbucks_missions():
-    url = "https://freethevbucks.com/timed-missions/"
+    url = "https://seebot.dev/missions.php"
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "application/json, text/javascript, */*; q=0.01"
     }
     try:
         response = requests.get(url, headers=headers)
         response.raise_for_status()
         soup = BeautifulSoup(response.text, 'html.parser')
-        missions_found = []
-        zones = ["STONEWOOD", "PLANKERTON", "CANNY VALLEY", "TWINE PEAKS"]
-        current_zone = "Unknown"
-        for element in soup.find_all(True):
-            if element.name in ['script', 'style', 'nav', 'header', 'footer']:
-                continue
-            text = element.get_text(separator=" ", strip=True)
-            text = " ".join(text.split())
-            text_upper = text.upper()
-            if len(text) < 25:
-                for zone in zones:
-                    if zone in text_upper:
-                        current_zone = zone.title()
+        json_data = None
+        
+        # استخراج دیتای منظم JSON از سایت
+        for script in soup.find_all('script'):
+            text = script.string
+            if text and "powerLevel" in text:
+                if "[" in text and "]" in text:
+                    start = text.find('[')
+                    end = text.rfind(']') + 1
+                    try:
+                        json_data = json.loads(text[start:end])
                         break
-            if "V-BUCKS" in text_upper and "(X" in text_upper:
-                if len(text) < 70:
-                    prefix = text_upper.split("V-BUCKS")[0]
-                    if any(c.isdigit() for c in prefix):
-                        mission_str = f"{current_zone} | {text}"
-                        add_new = True
-                        for i, existing in enumerate(missions_found):
-                            existing_pure = existing.split(" | ")[1]
-                            if text in existing_pure:
-                                missions_found[i] = mission_str
-                                add_new = False
-                                break
-                            elif existing_pure in text:
-                                add_new = False
-                                break
-                        if add_new:
-                            missions_found.append(mission_str)
+                    except:
+                        continue
+                        
+        missions_found = []
+        if json_data:
+            for mission in json_data:
+                alert_rewards = mission.get("alertRewards", [])
+                for r in alert_rewards:
+                    item_type = str(r.get("itemType", "")).upper()
+                    
+                    if "V-BUCKS" in item_type or "VBUCKS" in item_type:
+                        zone = mission.get("zone", "Unknown")
+                        name = mission.get("name", "Mission")
+                        pl = mission.get("powerLevel", 0)
+                        qty = r.get("quantity", 50)
+                        
+                        # فرمت‌دهی چند خطی و مرتب دقیقاً مشابه درخواست شما
+                        mission_str = (
+                            f"🌍 **{zone}**\n"
+                            f"📌 `{name}`\n"
+                            f"⚡ Power {pl}\n"
+                            f"💎 {qty} V-Bucks\n"
+                            f"───────────────────"
+                        )
+                        missions_found.append(mission_str)
+                        
         final_message = "✅ **Today's V-Bucks Missions:**\n\n"
         if missions_found:
-            for mission in list(dict.fromkeys(missions_found)):
-                zone_name, rest_of_text = mission.split(" | ")
-                rest_of_text = rest_of_text.replace("V-Bucks", "💎 V-Bucks")
-                final_message += f"🌍 {zone_name} ⚡ {rest_of_text}\n"
+            for mission in missions_found:
+                final_message += f"{mission}\n"
         else:
             final_message += "❌ No V-Bucks missions available today.\n"
+            
         return final_message
     except Exception as e:
         return f"❌ Error fetching V-Bucks: {e}"
