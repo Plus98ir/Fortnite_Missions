@@ -191,53 +191,67 @@ def get_160_missions():
         return f"❌ Error fetching 160 missions: {e}"
 
 def get_weekly_superchargers():
-    url = "https://fortnitedb.com/"
-    scraper = cloudscraper.create_scraper()
+    url = "https://seebot.dev/missions.php"  # یا هر لینکی که برای جوایز هفتگی داری
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "application/json, text/javascript, */*; q=0.01"
+    }
     try:
-        response = scraper.get(url, timeout=10)
+        response = requests.get(url, headers=headers)
         response.raise_for_status()
         soup = BeautifulSoup(response.text, 'html.parser')
+        json_data = None
         
-        weekly_found = []
-        for element in soup.find_all(True):
-            text = element.get_text(separator=" ", strip=True)
-            text_upper = text.upper()
-            
-            # جستجو برای سوپرشارژرها و کور ریپرک
-            if "SUPERCHARGER" in text_upper or "CORE REPERK" in text_upper or "REPERK" in text_upper:
-                if len(text) < 60:
-                    cleaned_text = text.replace("Weekly Supercharger", "").strip()
-                    if not cleaned_text:
-                        cleaned_text = text
-                    weekly_found.append(cleaned_text)
+        for script in soup.find_all('script'):
+            text = script.string
+            if text and "powerLevel" in text:
+                if "[" in text and "]" in text:
+                    start = text.find('[')
+                    end = text.rfind(']') + 1
+                    try:
+                        json_data = json.loads(text[start:end])
+                        break
+                    except:
+                        continue
                         
-        final_message = "🛠 **This Week's Reward:**\n\n"
-        valid_items = []
-        
-        for item in weekly_found:
-            item_lower = item.lower()
-            if "survivor" in item_lower and "Survivor Supercharger" not in valid_items:
-                valid_items.append("Survivor Supercharger")
-            elif "hero" in item_lower and "Hero Supercharger" not in valid_items:
-                valid_items.append("Hero Supercharger")
-            elif "defender" in item_lower and "Defender Supercharger" not in valid_items:
-                valid_items.append("Defender Supercharger")
-            elif "weapon" in item_lower and "Weapon Supercharger" not in valid_items:
-                valid_items.append("Weapon Supercharger")
-            elif "core reperk" in item_lower and "Core Reperk" not in valid_items:
-                valid_items.append("Core Reperk")
-                
-        if valid_items:
-            for item in valid_items:
-                final_message += f"🎁 {item}\n"
+        rewards_found = []
+        if json_data:
+            # فرض بر اینه که اینجا دیتای هفتگی رو فیلتر می‌کنی
+            for mission in json_data:
+                # این قسمت بسته به ساختار کدی که برای هفتگی نوشتی ممکنه متغیر باشه،
+                # اما مهم اینه که روی لیست جوایز (Rewards) حلقه می‌زنی:
+                for r in mission.get("alertRewards", []):
+                    item_type = str(r.get("itemType", "")).upper()
+                    qty = r.get("quantity", 1)
+                    
+                    # ---- این تیکه رو برای تعیین آیکون اضافه می‌کنیم ----
+                    if "SUPERCHARGER" in item_type:
+                        item_icon = "🚀"
+                    elif "RE-PERK" in item_type or "PERK" in item_type:
+                        item_icon = "🛠️"
+                    elif "SURVIVOR" in item_type:
+                        item_icon = "👥"
+                    else:
+                        item_icon = "🎁"
+                    # --------------------------------------------------
+                    
+                    reward_str = (
+                        f"🛠️ **Weekly Reset Reward**\n"
+                        f"{item_icon} `{item_type}` `x{qty}`\n"
+                        f"───────────────────"
+                    )
+                    if reward_str not in rewards_found:
+                        rewards_found.append(reward_str)
+                        
+        final_message = "🛠️ **This Week's Reset Rewards:**\n\n"
+        if rewards_found:
+            final_message += "\n".join(rewards_found)
         else:
-            unique_items = list(dict.fromkeys(weekly_found))
-            for item in unique_items[:3]:
-                final_message += f"🎁 {item}\n"
+            final_message += "❌ No weekly reset rewards found today.\n"
             
         return final_message
     except Exception as e:
-        return f"❌ Error fetching FortniteDB Weekly: {e}"
+        return f"❌ Error fetching weekly rewards: {e}"
 EOF
 
 # Creating vbucks_bot.py (Max 200 users, no photo)
