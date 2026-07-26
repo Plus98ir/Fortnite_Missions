@@ -225,8 +225,8 @@ def get_weekly_superchargers():
                     item_type = str(r.get("itemType", "")).upper()
                     qty = r.get("quantity", 1)
                     
-                    # فیلتر اصلاح‌شده: فقط سوپرشارژرها و کُر ری‌پرك (باید حتماً کلمه CORE رو داشته باشه)
-                    if "SUPERCHARGER" in item_type or ("CORE" in item_type and "PERK" in item_type):
+                    # فیلتر قطعی و نهایی: فقط نام‌های دقیق
+                    if "SUPERCHARGER" in item_type or "CORE RE-PERK" in item_type or "CORE REPERK" in item_type:
                         if "HERO" in item_type:
                             item_icon = "🦸‍♂️"
                         elif "WEAPON" in item_type:
