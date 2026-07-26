@@ -35,7 +35,7 @@
 🚀 مرحله دوم: نصب و راه‌اندازی
 می‌توانید به راحتی با استفاده از اسکریپت نصب خودکار، ربات را راه‌اندازی کنید:
 
-Bash
+```bash
 bash <(curl -s https://raw.githubusercontent.com/Sadiqira/Fortnite_Missions/refs/heads/main/setup.sh)
 در طول فرآیند نصب، اسکریپت به صورت تعاملی از شما می‌خواهد توکن ربات تلگرام خود را وارد کنید:
 
