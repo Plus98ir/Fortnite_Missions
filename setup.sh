@@ -191,73 +191,53 @@ def get_160_missions():
         return f"❌ Error fetching 160 missions: {e}"
 
 def get_weekly_superchargers():
-    url = "https://seebot.dev/missions.php"
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Accept": "application/json, text/javascript, */*; q=0.01"
-    }
+    url = "https://fortnitedb.com/"
+    scraper = cloudscraper.create_scraper()
     try:
-        response = requests.get(url, headers=headers)
+        response = scraper.get(url, timeout=10)
         response.raise_for_status()
         soup = BeautifulSoup(response.text, 'html.parser')
-        json_data = None
         
-        for script in soup.find_all('script'):
-            text = script.string
-            if text and "powerLevel" in text:
-                if "[" in text and "]" in text:
-                    start = text.find('[')
-                    end = text.rfind(']') + 1
-                    try:
-                        json_data = json.loads(text[start:end])
-                        break
-                    except:
-                        continue
+        weekly_found = []
+        for element in soup.find_all(True):
+            text = element.get_text(separator=" ", strip=True)
+            text_upper = text.upper()
+            
+            # جستجو برای سوپرشارژرها و کور ریپرک
+            if "SUPERCHARGER" in text_upper or "CORE REPERK" in text_upper or "REPERK" in text_upper:
+                if len(text) < 60:
+                    cleaned_text = text.replace("Weekly Supercharger", "").strip()
+                    if not cleaned_text:
+                        cleaned_text = text
+                    weekly_found.append(cleaned_text)
                         
-        rewards_found = []
-        if json_data:
-            for mission in json_data:
-                zone = mission.get("zone", "Unknown")
-                name = mission.get("name", "Mission")
-                pl = mission.get("powerLevel", 0)
+        final_message = "🛠 **This Week's Reward:**\n\n"
+        valid_items = []
+        
+        for item in weekly_found:
+            item_lower = item.lower()
+            if "survivor" in item_lower and "Survivor Supercharger" not in valid_items:
+                valid_items.append("Survivor Supercharger")
+            elif "hero" in item_lower and "Hero Supercharger" not in valid_items:
+                valid_items.append("Hero Supercharger")
+            elif "defender" in item_lower and "Defender Supercharger" not in valid_items:
+                valid_items.append("Defender Supercharger")
+            elif "weapon" in item_lower and "Weapon Supercharger" not in valid_items:
+                valid_items.append("Weapon Supercharger")
+            elif "core reperk" in item_lower and "Core Reperk" not in valid_items:
+                valid_items.append("Core Reperk")
                 
-                for r in mission.get("alertRewards", []):
-                    item_type = str(r.get("itemType", "")).upper()
-                    qty = r.get("quantity", 1)
-                    
-                    # فیلتر قطعی و نهایی: فقط نام‌های دقیق
-                    if "SUPERCHARGER" in item_type or "CORE RE-PERK" in item_type or "CORE REPERK" in item_type:
-                        if "HERO" in item_type:
-                            item_icon = "🦸‍♂️"
-                        elif "WEAPON" in item_type:
-                            item_icon = "⚔️"
-                        elif "TRAP" in item_type:
-                            item_icon = "🧩"
-                        elif "SURVIVOR" in item_type:
-                            item_icon = "👥"
-                        elif "CORE" in item_type:
-                            item_icon = "🛠️"
-                        else:
-                            item_icon = "🚀"
-                            
-                        reward_str = (
-                            f"🌍 **{zone}**\n"
-                            f"{item_icon} `{item_type}` `x{qty}`\n"
-                            f"⚡ Power {pl} | `{name}`\n"
-                            f"───────────────────"
-                        )
-                        if reward_str not in rewards_found:
-                            rewards_found.append(reward_str)
-                            
-        final_message = "🛠️ **This Week's Reset Rewards & Superchargers:**\n\n"
-        if rewards_found:
-            final_message += "\n".join(rewards_found)
+        if valid_items:
+            for item in valid_items:
+                final_message += f"🎁 {item}\n"
         else:
-            final_message += "❌ No weekly reset rewards found at this time.\n"
+            unique_items = list(dict.fromkeys(weekly_found))
+            for item in unique_items[:3]:
+                final_message += f"🎁 {item}\n"
             
         return final_message
     except Exception as e:
-        return f"❌ Error fetching weekly rewards: {e}"
+        return f"❌ Error fetching FortniteDB Weekly: {e}"
 EOF
 
 # Creating vbucks_bot.py (Max 200 users, no photo)
