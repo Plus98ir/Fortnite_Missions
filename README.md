@@ -18,7 +18,7 @@ A smart, lightweight Telegram bot designed to instantly fetch and notify players
 * **Weekly Rewards:** Never miss out on rare weekly progression items and top-tier upgrades.
 * **160 PL Mission Tracker:** Easily check high-tier PL 160 missions, zone modifiers, and supercharger rewards.
 * **Interactive Setup Script:** Quick automated installation via a single terminal command, prompting for your Bot Token.
-* **Send Notification** 1 Min after shop updated
+* **Send Notification** 1 Min after shop updated.
 * **Fast & Lightweight:** Built for minimal resource consumption and instant response times.
 
 
