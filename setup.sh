@@ -1,4 +1,6 @@
-read -p "لطفاً توکن ربات تلگرام خود را وارد کنید (مثلاً 123456:ABC-DEF...): " BOT_TOKEN && apt update && apt install python3-requests python3-bs4 -y && pip3 install requests beautifulsoup4 python-telegram-bot --break-system-packages && cat << 'EOF' > /root/vbucks_scraper.py
+read -p "لطفاً توکن ربات تلگرام خود را وارد کنید (مثلاً 123456:ABC-DEF...): " BOT_TOKEN && \
+read -p "لطفاً چت آیدی عددی خود یا کانال برای دریافت نوتیفیکیشن را وارد کنید (مثلاً 123456789 یا @YourChannel): " CHAT_ID && \
+apt update && apt install python3-requests python3-bs4 -y && pip3 install requests beautifulsoup4 python-telegram-bot --break-system-packages && cat << 'EOF' > /root/vbucks_scraper.py
 import requests
 import json
 from bs4 import BeautifulSoup
@@ -117,10 +119,11 @@ EOF
 
 cat << EOF > /root/vbucks_bot.py
 import logging
+from datetime import time, timezone
 from telegram import Update, ReplyKeyboardMarkup, KeyboardButton
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, MessageHandler, filters
 
-# اگر خواستی در آینده پروکسی را فعال کنی، این کامنت‌ها را بردار:
+# اگر خواستید در آینده پروکسی را فعال کنید، خط زیر را از حالت کامنت خارج کنید:
 # from telegram.request import HTTPXRequest
 
 # تنظیمات لاگ‌گیری
@@ -129,8 +132,11 @@ logging.basicConfig(
     level=logging.INFO
 )
 
-# توکن ربات تلگرام (توسط اسکریپت نصب به صورت خودکار وارد شد)
+# توکن ربات تلگرام (توسط اسکریپت نصب شد)
 TOKEN = "$BOT_TOKEN"
+
+# چت آیدی مقصد برای دریافت نوتیفیکیشن خودکار
+NOTIFICATION_CHAT_ID = "$CHAT_ID"
 
 # تنظیمات پروکسی (فعلا کامنت است)
 # PROXY_URL = "socks5://5oir1q2j:8wiogugrlggs@127.0.0.1:45248"
@@ -160,18 +166,44 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         data = get_160_missions()
         await update.message.reply_text(data, parse_mode="Markdown")
 
+# ارسال خودکار نوتیفیکیشن در زمان ریست روزانه (00:00 UTC / 3:30 ایران)
+async def daily_reset_notification(context: ContextTypes.DEFAULT_TYPE):
+    try:
+        vbucks_data = get_vbucks_missions()
+        missions_160_data = get_160_missions()
+        message = (
+            "🔔 **Fortnite Daily Reset & Shop Update!** 🛒\n"
+            "-----------------------------------\n\n"
+            f"{vbucks_data}\n\n"
+            f"{missions_160_data}"
+        )
+        await context.bot.send_message(
+            chat_id=NOTIFICATION_CHAT_ID,
+            text=message,
+            parse_mode="Markdown"
+        )
+    except Exception as e:
+        print(f"Error in daily notification: {e}")
+
 if __name__ == '__main__':
-    # حالت پروکسی (برای استفاده بعدی کافیست کامنت این بخش را بردارید و خط زیر را فعال کنید):
+    # حالت پروکسی (برای استفاده بعدی کافیست کامنت این بخش را بردارید):
     # t_request = HTTPXRequest(proxy=PROXY_URL)
     # application = ApplicationBuilder().token(TOKEN).request(t_request).get_updates_request(t_request).build()
 
     # حالت مستقیم (فعلی)
     application = ApplicationBuilder().token(TOKEN).build()
 
+    # تنظیم زمان‌سنج برای اجرای خودکار روزانه رأس ساعت 00:00 UTC (3:30 بامداد ایران)
+    job_queue = application.job_queue
+    job_queue.run_daily(
+        daily_reset_notification,
+        time=time(hour=0, minute=0, tzinfo=timezone.utc)
+    )
+
     application.add_handler(CommandHandler("start", start))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_handler))
 
-    print("🤖 Telegram Bot is running...")
+    print("🤖 Telegram Bot with Daily UTC Reset Notification is running...")
     application.run_polling()
 EOF
 
@@ -195,4 +227,4 @@ EOF
 systemctl daemon-reload
 systemctl enable vbucksbot.service
 systemctl restart vbucksbot.service
-echo "✅ نصب با موفقیت انجام شد و ربات در حال اجراست!"
+echo "✅ ربات با موفقیت نصب شد، توکن و چت آیدی ست شد و سرویس فعال گردید!"
