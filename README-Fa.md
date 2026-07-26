@@ -35,4 +35,4 @@
 می‌توانید به راحتی با استفاده از اسکریپت نصب خودکار، ربات را راه‌اندازی کنید:
 
 ```bash
-bash <(curl -s [https://raw.githubusercontent.com/Sadiqira/Fortnite_Missions/refs/heads/main/setup.sh](https://raw.githubusercontent.com/Sadiqira/Fortnite_Missions/refs/heads/main/setup.sh))
+bash <(curl -s https://raw.githubusercontent.com/Sadiqira/Fortnite_Missions/refs/heads/main/setup.sh)
