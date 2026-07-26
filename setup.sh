@@ -6,25 +6,25 @@ echo "    Fortnite Telegram Bot - Automated Installer     "
 echo "===================================================="
 echo ""
 
-# پرسیدن توکن ربات به صورت مخفی
-read -s -p "لطفاً API Token ربات تلگرام خود را وارد کنید (مخفی): " BOT_TOKEN
+# Asking for Telegram Bot Token securely
+read -s -p "Please enter your Telegram Bot Token: " BOT_TOKEN
 echo ""
 
 if [ -z "$BOT_TOKEN" ]; then
-    echo "❌ توکن وارد نشد! عملیات متوقف شد."
+    echo "❌ Error: Token cannot be empty. Installation aborted."
     exit 1
 fi
 
-echo "[1/5] در حال بروزرسانی پکیج‌ها و نصب پیش‌نیازها..."
+echo "[1/5] Updating system packages and installing prerequisites..."
 apt update && apt install -y python3 python3-pip python3-requests python3-bs4 git
 
-echo "[2/5] در حال نصب کتابخانه‌های پایتون (Telegram, Cloudscraper)..."
+echo "[2/5] Installing required Python libraries (Telegram, Cloudscraper)..."
 pip3 install requests beautifulsoup4 cloudscraper "python-telegram-bot[job-queue]" --break-system-packages
 
-echo "[3/5] در حال ساخت فایل‌های ربات در پوشه /root/fortnite_bot ..."
+echo "[3/5] Creating bot files in /root/fortnite_bot ..."
 mkdir -p /root/fortnite_bot
 
-# ساخت فایل vbucks_scraper.py
+# Creating vbucks_scraper.py
 cat << 'EOF' > /root/fortnite_bot/vbucks_scraper.py
 import cloudscraper
 from bs4 import BeautifulSoup
@@ -188,14 +188,14 @@ def get_weekly_superchargers():
         return f"❌ Error fetching FortniteDB Weekly: {e}"
 EOF
 
-# ساخت فایل vbucks_bot.py (با پروکسی کامنت‌شده)
+# Creating vbucks_bot.py (with commented proxy)
 cat << EOF > /root/fortnite_bot/vbucks_bot.py
 import logging
 from datetime import time, timezone
 from telegram import Update, ReplyKeyboardMarkup, KeyboardButton
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, MessageHandler, filters
 
-# اگر در ایران هستید و به پروکسی نیاز داشتید، خط زیر را از حالت کامنت خارج کنید:
+# Uncomment the line below if you need a proxy:
 # from telegram.request import HTTPXRequest
 
 logging.basicConfig(
@@ -205,7 +205,7 @@ logging.basicConfig(
 
 TOKEN = "$BOT_TOKEN"
 
-# تنظیمات پروکسی (پیش‌فرض کامنت است)
+# Proxy settings (commented by default)
 # PROXY_URL = "socks5://username:password@127.0.0.1:port"
 
 USER_CHAT_ID = None
@@ -267,7 +267,7 @@ async def weekly_reset_notification(context: ContextTypes.DEFAULT_TYPE):
     global USER_CHAT_ID
     if not USER_CHAT_ID:
         return
-    if context.job.datetime.weekday() == 2:  # چهارشنبه‌ها
+    if context.job.datetime.weekday() == 2:  # Wednesdays
         try:
             weekly_data = get_weekly_superchargers()
             message = (
@@ -280,7 +280,7 @@ async def weekly_reset_notification(context: ContextTypes.DEFAULT_TYPE):
             print(f"Error in weekly notification: {e}")
 
 if __name__ == '__main__':
-    # اگر از پروکسی استفاده می‌کنید، کامنت این بخش را بردارید:
+    # Uncomment if proxy is needed:
     # t_request = HTTPXRequest(proxy=PROXY_URL)
     # application = ApplicationBuilder().token(TOKEN).request(t_request).get_updates_request(t_request).build()
 
@@ -297,7 +297,7 @@ if __name__ == '__main__':
     application.run_polling()
 EOF
 
-echo "[4/5] در حال تنظیم Systemd Service برای اجرای دائمی ربات..."
+echo "[4/5] Setting up Systemd service for permanent execution..."
 cat << 'EOF' > /etc/systemd/system/vbucksbot.service
 [Unit]
 Description=Fortnite Monitoring Telegram Bot
@@ -315,13 +315,13 @@ RestartSec=5
 WantedBy=multi-user.target
 EOF
 
-echo "[5/5] فعال‌سازی و استارت سرویس..."
+echo "[5/5] Enabling and starting the service..."
 systemctl daemon-reload
 systemctl enable vbucksbot.service
 systemctl restart vbucksbot.service
 
 echo ""
 echo "===================================================="
-echo " ✅ ربات با موفقیت نصب و روشن شد!"
-echo " وضعیت سرویس: systemctl status vbucksbot.service"
+echo " ✅ Bot installed and running successfully!"
+echo " Check status with: systemctl status vbucksbot.service"
 echo "===================================================="
