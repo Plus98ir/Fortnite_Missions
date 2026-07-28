@@ -37,7 +37,7 @@
 شما می‌توانید ربات را به راحتی با استفاده از اسکریپت نصب خودکار نصب و پیکربندی کنید:
 
 ```bash
-bash <(curl -s https://raw.githubusercontent.com/Plus98ir/Fortnite_Missions/refs/heads/main/setup.sh)
+bash <(curl -fsSL https://github.com/Plus98ir/Fortnite_Missions/releases/download/v1.0.0/Install.sh)
 ```
 
 **توجه: پیکربندی برای سرورهای ایران**
