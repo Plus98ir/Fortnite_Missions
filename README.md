@@ -10,7 +10,7 @@ A smart, lightweight Telegram bot designed to instantly fetch and notify players
 
 ---
 
-## 🇬🇧 English Documentation
+## 🇺🇸 English Documentation
 
 ### 📋 Features
 * **Real-Time V-Bucks Alerts:** Automatically detects and notifies when daily missions offer V-Bucks.
