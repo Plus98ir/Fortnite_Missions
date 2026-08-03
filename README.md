@@ -4,7 +4,10 @@
 
 A smart, lightweight Telegram bot designed to instantly fetch and notify players about Fortnite Save the World (STW) Weekly Reward & 160PL missions and daily V-Bucks alerts.
 
-**[English](#) | [فارسی (Persian)](README-Fa.md)**
+<p dir="ltr">
+  <a href="#english"><b>🇺🇸 English</b></a> &nbsp;&nbsp;|&nbsp;&nbsp; 
+  <a href="README-Fa.md"><b>🇮🇷 فارسی (Persian)</b></a>
+</p>
 
 </div>
 
