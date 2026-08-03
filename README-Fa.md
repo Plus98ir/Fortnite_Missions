@@ -64,14 +64,22 @@ bash <(curl -fsSL https://github.com/Plus98ir/Fortnite_Missions/releases/latest/
 nano /root/fortnite_bot/vbucks_bot.py
 ```
 
+<div dir="rtl">
 
 متغیر `PROXY_URL` را پیدا کنید، مشخصات پروکسی خود را وارد کرده و با حذف علامت `#` خط را از حالت کامنت خارج کنید:
+
+</div>
+
 ```python
 PROXY_URL = "socks5://username:password@127.0.0.1:port"
 ```
 
+<div dir="rtl">
+
 **۲. فعال‌سازی پروکسی در برنامه**
 به پایین و بخش `if __name__ == '__main__':` بروید و **دو** خط زیر را از حالت کامنت خارج کنید تا تنظیمات پروکسی اعمال شود:
+
+</div>
 
 <div align="right">
 
