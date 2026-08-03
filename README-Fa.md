@@ -41,9 +41,15 @@
 ### 🚀 مرحله ۲: نصب و پیکربندی
 شما می‌توانید ربات را به راحتی با استفاده از اسکریپت نصب خودکار نصب و پیکربندی کنید:
 
+<div align="right">
+
 ```bash
 bash <(curl -fsSL https://github.com/Plus98ir/Fortnite_Missions/releases/latest/download/install.sh)
 ```
+</div>
+
+
+<div dir="rtl">
 
 **توجه: پیکربندی برای سرورهای ایران**
 
@@ -51,9 +57,14 @@ bash <(curl -fsSL https://github.com/Plus98ir/Fortnite_Missions/releases/latest/
 
 **۱. تنظیم آدرس پروکسی**
 فایل ربات را با استفاده از ویرایشگر متن خود باز کنید:
+
+</div>
+
 ```bash
 nano /root/fortnite_bot/vbucks_bot.py
 ```
+
+
 متغیر `PROXY_URL` را پیدا کنید، مشخصات پروکسی خود را وارد کرده و با حذف علامت `#` خط را از حالت کامنت خارج کنید:
 ```python
 PROXY_URL = "socks5://username:password@127.0.0.1:port"
