@@ -72,11 +72,17 @@ PROXY_URL = "socks5://username:password@127.0.0.1:port"
 
 **۲. فعال‌سازی پروکسی در برنامه**
 به پایین و بخش `if __name__ == '__main__':` بروید و **دو** خط زیر را از حالت کامنت خارج کنید تا تنظیمات پروکسی اعمال شود:
+
+<div align="right">
+
 ```python
 # Uncomment if proxy is needed:
 t_request = HTTPXRequest(proxy=PROXY_URL)
 application = ApplicationBuilder().token(TOKEN).request(t_request).get_updates_request(t_request).build()
 ```
+
+</div>
+
 
 **۳. ری‌استارت کردن سرویس vbucksbot**
 ```bash
