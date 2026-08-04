@@ -1,8 +1,6 @@
-<h1 align="center">🤖 ربات تلگرام هشدار مأموریت‌های وی‌باکس و 160PL</h1>
+# 🤖 ربات تلگرام هشدار مأموریت‌های وی‌باکس و 160PL
 
-<p align="center">
-  <a href="README.md">us English</a> | <b>IR فارسی</b>
-</p>
+[us English](README.md) | **IR فارسی**
 
 ---
 
