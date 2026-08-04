@@ -6,8 +6,7 @@
 
 
 
-<a href="README.md"><b>🇺🇸 English</b></a> |
-<b>🇮🇷 فارسی</b>
+<a href="README.md"><b>🇺🇸 English</b></a>
 
 </div>
 
