@@ -1,7 +1,5 @@
 # 🤖 Fortnite STW Alert Weekly Reward & 160PL Mission Tracker
 
-[🇮🇷 فارسی](README-Fa.md) | **🇺🇸 us English**
-
 ---
 
  <p align="center">
@@ -9,6 +7,10 @@
     <img src="https://img.shields.io/badge/Website-Plus98ir.github.io-blue?style=for-the-badge&logo=google-chrome" alt="Web Page">
   </a>
 </p>
+
+---
+
+[🇮🇷 فارسی](README-Fa.md) | **🇺🇸 us English**
 
 ---
 
