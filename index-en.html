@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🤖 Fortnite STW Alert Weekly Reward & 160PL Mission Tracker</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5.2.0/github-markdown-dark.css">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #0d1117;
+        }
+        .markdown-body {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="markdown-body">
+        <h1>🤖 Fortnite STW Alert Weekly Reward & 160PL Mission Tracker</h1>
+        
+        <p>
+            <strong>us English</strong> | <a href="README-Fa.md">IR فارسی</a>
+        </p>
+
+        <hr>
+
+        <h2>🇺🇸 English Documentation</h2>
+
+        <h3>📋 Features</h3>
+        <ul>
+            <li><strong>Real-Time V-Bucks Alerts:</strong> Automatically detects and notifies when daily missions offer V-Bucks.</li>
+            <li><strong>Supercharger Alerts:</strong> Instantly track and get notified when weekly missions or alert resets offer Hero, Survivor, Weapon, or Trap Superchargers.</li>
+            <li><strong>Weekly Rewards:</strong> Never miss out on rare weekly progression items and top-tier upgrades.</li>
+            <li><strong>160 PL Mission Tracker:</strong> Easily check high-tier PL 160 missions, zone modifiers, and supercharger rewards.</li>
+            <li><strong>Interactive Setup Script:</strong> Quick automated installation via a single terminal command, prompting for your Bot Token.</li>
+            <li><strong>Send Notification:</strong> 1 Min after shop updated.</li>
+            <li><strong>Fast & Lightweight:</strong> Built for minimal resource consumption and instant response times.</li>
+        </ul>
+
+        <h3>⚙️ Step 1: Get Your Telegram Bot Token</h3>
+        <p>Before installing the bot, you need to create a Telegram bot via BotFather:</p>
+        <ol>
+            <li>Open Telegram and search for <code>@BotFather</code>.</li>
+            <li>Start a chat and send the command: <code>/newbot</code></li>
+            <li>Follow the prompts to choose a display name for your bot.</li>
+            <li>Choose a unique username ending in <code>bot</code> or <code>_bot</code> (e.g., <code>FortniteAlertsBot</code>).</li>
+            <li>Copy the HTTP API Token provided by BotFather.</li>
+        </ol>
+
+        <blockquote>
+            <p><strong>⚠️ Warning:</strong> Keep your bot token secure! Do not share it publicly or push it to GitHub.</p>
+        </blockquote>
+
+        <h3>🚀 Step 2: Installation & Configuration</h3>
+        <p>You can easily install and configure the bot using our automated installation script:</p>
+        <pre><code class="language-bash">bash &lt;(curl -fsSL https://github.com/Plus98ir/Fortnite_Missions/releases/latest/download/install.sh)</code></pre>
+
+        <h3>Note: Configuration for Iranian Servers</h3>
+        <p>If you are hosting the bot on an Iranian server, you will need to configure a proxy. Please follow these steps:</p>
+
+        <h4>1. Set the Proxy URL</h4>
+        <p>Open the bot file using your text editor:</p>
+        <pre><code class="language-bash">nano /root/fortnite_bot/vbucks_bot.py</code></pre>
+        <p>Locate the <code>PROXY_URL</code> variable, enter your proxy details, and uncomment the line by removing the <code>#</code>:</p>
+        <pre><code class="language-python">PROXY_URL = "socks5://username:password@127.0.0.1:port"</code></pre>
+
+        <h4>2. Enable the Proxy in the Application</h4>
+        <p>Scroll down to the <code>if __name__ == '__main__':</code> section and uncomment the following <strong>two</strong> lines to apply the proxy settings:</p>
+        <pre><code class="language-python"># Uncomment if proxy is needed:
+t_request = HTTPXRequest(proxy=PROXY_URL)
+application = ApplicationBuilder().token(TOKEN).request(t_request).get_updates_request(t_request).build()</code></pre>
+
+        <h4>3. Reboot vbucksbot.service</h4>
+        <pre><code class="language-bash">systemctl restart vbucksbot.service</code></pre>
+
+        <h3>Also:</h3>
+        <ul>
+            <li>If you don't have a server or prefer to skip the installation and setup process, you can use my bot. Just a heads-up, I am not sure how long it will remain active: <code>@plus98vbucks_bot</code></li>
+            <li>The default capacity is set to 200 users for mission notifications.</li>
+            <li>To modify this limit on your server, edit the script using (<code>nano /root/fortnite_bot/vbucks_bot.py</code>)</li>
+            <li>Locate the <code>MAX_USERS = 200</code> variable and adjust it to your desired number.</li>
+        </ul>
+    </div>
+</body>
+</html>
