@@ -1,10 +1,10 @@
-<h1 align="center">🤖 Fortnite STW Alert Weekly Reward & 160PL Mission Tracker</h1>
+<div align="center">
 
-<p align="center">
-  <b>us English</b> | <a href="README-Fa.md">IR فارسی</a>
-</p>
+# 🤖 Fortnite STW Alert Weekly Reward & 160PL Mission Tracker
 
----
+**us English** | [IR فارسی](https://plus98ir.dpdns.org/Fortnite_Missions/README-Fa.html)
+
+</div>
 
 ---
 
