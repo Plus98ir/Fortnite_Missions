@@ -1,5 +1,4 @@
 <div align="center">
-<div align="center">
 
 # 🤖 ربات تلگرام هشدار مأموریت‌های وی‌باکس و 160PL
 
