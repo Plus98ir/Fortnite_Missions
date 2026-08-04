@@ -1,10 +1,8 @@
-<div align="center">
+<h1 align="center">🤖 ربات تلگرام هشدار مأموریت‌های وی‌باکس و 160PL</h1>
 
-# 🤖 ربات تلگرام هشدار مأموریت‌های وی‌باکس و 160PL
-
-[us English](https://plus98ir.dpdns.org/Fortnite_Missions/) | **IR فارسی**
-
-</div>
+<p align="center">
+  <a href="README.md">us English</a> | <b>IR فارسی</b>
+</p>
 
 ---
 
