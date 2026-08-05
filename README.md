@@ -64,7 +64,8 @@ PROXY_URL = "socks5://username:password@127.0.0.1:port"
 **2. Enable the Proxy in the Application**
 Scroll down to the if __name__ == '__main__': section, define t_request, and uncomment the following lines to apply the proxy settings:
 
-Scroll down to the `if __name__ == '__main__':` section and uncomment the following **two** lines to apply the proxy settings:
+Scroll down to the `if __name__ == '__main__':` section and uncomment the following **three** lines to apply the proxy settings:
+
 
 ```python
 # Enable proxy settings if needed:
