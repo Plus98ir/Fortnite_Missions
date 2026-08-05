@@ -95,9 +95,19 @@
 
         <h4>2. Enable the Proxy in the Application</h4>
         <p>Scroll down to the <code>if __name__ == '__main__':</code> section and uncomment the following <strong>two</strong> lines to apply the proxy settings:</p>
-        <pre><code class="language-python"># Uncomment if proxy is needed:
-t_request = HTTPXRequest(proxy=PROXY_URL)
-application = ApplicationBuilder().token(TOKEN).request(t_request).get_updates_request(t_request).build()</code></pre>
+        <pre><code class="language-python"># Enable proxy settings if needed:
+    t_request = HTTPXRequest(proxy=PROXY_URL) # <--- Remove '#' to uncomment
+    
+    defaults = Defaults(tzinfo=timezone.utc)
+    
+    application = (
+        ApplicationBuilder()
+        .token(TOKEN)
+        .request(t_request)               # <--- Remove '#' to uncomment
+        .get_updates_request(t_request)   # <--- Remove '#' to uncomment
+        .defaults(defaults)
+        .build()
+    )</code></pre>
 
         <h4>3. Reboot vbucksbot.service</h4>
         <pre><code class="language-bash">systemctl restart vbucksbot.service</code></pre>
