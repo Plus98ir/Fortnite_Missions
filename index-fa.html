@@ -114,10 +114,20 @@
         <pre><code class="language-python">PROXY_URL = "socks5://username:password@127.0.0.1:port"</code></pre>
 
         <h4>۲. فعال‌سازی پروکسی در برنامه</h4>
-        <p>به بخش <code>if __name__ == '__main__':</code> بروید و دو خط زیر را از حالت کامنت خارج کنید:</p>
-        <pre><code class="language-python"># Uncomment if proxy is needed:
-t_request = HTTPXRequest(proxy=PROXY_URL)
-application = ApplicationBuilder().token(TOKEN).request(t_request).get_updates_request(t_request).build()</code></pre>
+        <p>به بخش <code>if __name__ == '__main__':</code> بروید و سه خط را از حالت کامنت خارج کنید:</p>
+        <pre><code class="language-python"># فعال‌سازی تنظیمات پروکسی در صورت نیاز:
+    t_request = HTTPXRequest(proxy=PROXY_URL) # <--- برای خارج کردن از کامنت، علامت # را بردارید
+    
+    defaults = Defaults(tzinfo=timezone.utc)
+    
+    application = (
+        ApplicationBuilder()
+        .token(TOKEN)
+        .request(t_request)               # <--- برای خارج کردن از کامنت، علامت # را بردارید
+        .get_updates_request(t_request)   # <--- برای خارج کردن از کامنت، علامت # را بردارید
+        .defaults(defaults)
+        .build()
+    )</code></pre>
 
         <h4>۳. ری‌استارت کردن سرویس</h4>
         <pre><code class="language-bash">systemctl restart vbucksbot.service</code></pre>
