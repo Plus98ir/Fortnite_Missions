@@ -66,6 +66,9 @@ PROXY_URL = "socks5://username:password@127.0.0.1:port"
 
 به انتهای فایل و بخش if __name__ == '__main__': بروید. در آنجا، متغیر t_request را تعریف کرده و خطوط زیر را از حالت کامنت خارج کنید (با برداشتن علامت #) تا تنظیمات پروکسی اعمال شود:
 
+
+<div style="direction: rtl; text-align: right;">
+ 
 ```python
 # فعال‌سازی تنظیمات پروکسی در صورت نیاز:
     t_request = HTTPXRequest(proxy=PROXY_URL) # <--- برای خارج کردن از کامنت، علامت # را بردارید
@@ -80,7 +83,9 @@ PROXY_URL = "socks5://username:password@127.0.0.1:port"
         .defaults(defaults)
         .build()
     )
+
 ```
+</div>
 
 **۳. ری‌استارت کردن سرویس vbucksbot**
 
