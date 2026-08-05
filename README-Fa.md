@@ -78,8 +78,11 @@ PROXY_URL = "socks5://username:password@127.0.0.1:port"
     application = (
         ApplicationBuilder()
         .token(TOKEN)
-        .request(t_request)               # <--- برای خارج کردن از کامنت، علامت # را بردارید
+
+        .request(t_request)               # <---برای خارج کردن از کامنت، علامت # را بردارید
+
         .get_updates_request(t_request)   # <--- برای خارج کردن از کامنت، علامت # را بردارید
+
         .defaults(defaults)
         .build()
     )
