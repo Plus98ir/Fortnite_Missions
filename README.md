@@ -62,13 +62,24 @@ PROXY_URL = "socks5://username:password@127.0.0.1:port"
 ```
 
 **2. Enable the Proxy in the Application**
+Scroll down to the if __name__ == '__main__': section, define t_request, and uncomment the following lines to apply the proxy settings:
 
 Scroll down to the `if __name__ == '__main__':` section and uncomment the following **two** lines to apply the proxy settings:
 
 ```python
-# Uncomment if proxy is needed:
-t_request = HTTPXRequest(proxy=PROXY_URL)
-application = ApplicationBuilder().token(TOKEN).request(t_request).get_updates_request(t_request).build()
+# Enable proxy settings if needed:
+    t_request = HTTPXRequest(proxy=PROXY_URL) # <--- Remove '#' to uncomment
+    
+    defaults = Defaults(tzinfo=timezone.utc)
+    
+    application = (
+        ApplicationBuilder()
+        .token(TOKEN)
+        .request(t_request)               # <--- Remove '#' to uncomment
+        .get_updates_request(t_request)   # <--- Remove '#' to uncomment
+        .defaults(defaults)
+        .build()
+    )
 ```
 
 **3. Reboot vbucksbot.service**
