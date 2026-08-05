@@ -68,7 +68,6 @@ PROXY_URL = "socks5://username:password@127.0.0.1:port"
 
 
 <div style="direction: rtl; text-align: right;">
- 
 # فعال‌سازی تنظیمات پروکسی در صورت نیاز:
     t_request = HTTPXRequest(proxy=PROXY_URL) # <--- برای خارج کردن از کامنت، علامت # را بردارید
 
@@ -82,8 +81,7 @@ PROXY_URL = "socks5://username:password@127.0.0.1:port"
         .defaults(defaults)
         .build()
     )
-
-
+</div>
 **۳. ری‌استارت کردن سرویس vbucksbot**
 
 ```bash
