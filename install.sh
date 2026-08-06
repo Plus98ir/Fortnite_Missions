@@ -6,7 +6,6 @@ echo "    Fortnite Telegram Bot - Automated Installer     "
 echo "===================================================="
 echo ""
 
-# Asking for Telegram Bot Token securely
 read -s -p "Please enter your Telegram Bot Token: " BOT_TOKEN
 echo ""
 
@@ -19,7 +18,7 @@ echo "[1/5] Updating system packages and installing prerequisites..."
 apt update && apt install -y python3 python3-pip python3-requests python3-bs4 git
 
 echo "[2/5] Installing required Python libraries (Telegram, Cloudscraper)..."
-pip3 install requests beautifulsoup4 cloudscraper "python-telegram-bot[job-queue]" --break-system-packages
+pip3 install requests beautifulsoup4 cloudscraper "python-telegram-bot[job-queue]" httpx[socks] --break-system-packages
 
 echo "[3/5] Creating bot files in /root/fortnite_bot ..."
 mkdir -p /root/fortnite_bot
@@ -30,6 +29,7 @@ import cloudscraper
 from bs4 import BeautifulSoup
 import requests
 import json
+import re
 
 def get_vbucks_missions():
     url = "https://seebot.dev/missions.php"
@@ -68,7 +68,6 @@ def get_vbucks_missions():
                         pl = mission.get("powerLevel", 0)
                         qty = r.get("quantity", 50)
                         
-                        # انتخاب آیکون فابریک و اختصاصی بر اساس نوع مأموریت (دقیقاً شبیه خود بازی)
                         name_upper = name.upper()
                         if "RIDE THE LIGHTNING" in name_upper:
                             mission_icon = "🚚"
@@ -89,7 +88,6 @@ def get_vbucks_missions():
                         else:
                             mission_icon = "🎯"
                         
-                        # چینش کامل و خط به خط مورد علاقه شما همراه با آیکون اختصاصی
                         mission_str = (
                             f"🌍 **{zone}**\n"
                             f"{mission_icon} `{name}`\n"
@@ -144,7 +142,6 @@ def get_160_missions():
                     name = mission.get("name", "Mission")
                     biome = mission.get("biome", "")
                     
-                    # تعیین آیکون فابریک بر اساس نوع مأموریت ۱۶۰
                     name_upper = name.upper()
                     if "RIDE THE LIGHTNING" in name_upper:
                         mission_icon = "🚚"
@@ -169,7 +166,6 @@ def get_160_missions():
                         alert_list.append(f"▪️ {r.get('itemType')} `x{r.get('quantity')}`")
                     alert_str = "\n   ".join(alert_list) if alert_list else "None"
                     
-                    # فرمت‌دهی چندخطی، مرتب و هماهنگ با وی‌باکس‌ها
                     mission_info = (
                         f"🌍 **{zone}**\n"
                         f"{mission_icon} `{name}`\n"
@@ -193,92 +189,93 @@ def get_160_missions():
 def get_weekly_superchargers():
     url = "https://fortnitedb.com/"
     scraper = cloudscraper.create_scraper()
+    
     try:
-        response = scraper.get(url, timeout=10)
+        response = scraper.get(url, timeout=15)
         response.raise_for_status()
         soup = BeautifulSoup(response.text, 'html.parser')
         
-        weekly_found = []
-        for element in soup.find_all(True):
-            text = element.get_text(separator=" ", strip=True)
-            text_upper = text.upper()
-            
-            # جستجو برای سوپرشارژرها و کور ریپرک
-            if "SUPERCHARGER" in text_upper or "CORE REPERK" in text_upper or "REPERK" in text_upper:
-                if len(text) < 60:
-                    cleaned_text = text.replace("Weekly Supercharger", "").strip()
-                    if not cleaned_text:
-                        cleaned_text = text
-                    weekly_found.append(cleaned_text)
-                        
-        final_message = "🛠 **This Week's Reward:**\n\n"
-        valid_items = []
+        weekly_reward = None
         
-        for item in weekly_found:
-            item_lower = item.lower()
-            if "survivor" in item_lower and "Survivor Supercharger" not in valid_items:
-                valid_items.append("Survivor Supercharger")
-            elif "hero" in item_lower and "Hero Supercharger" not in valid_items:
-                valid_items.append("Hero Supercharger")
-            elif "defender" in item_lower and "Defender Supercharger" not in valid_items:
-                valid_items.append("Defender Supercharger")
-            elif "weapon" in item_lower and "Weapon Supercharger" not in valid_items:
-                valid_items.append("Weapon Supercharger")
-            elif "trap" in item_lower and "Trap Supercharger" not in valid_items:
-                valid_items.append("Trap Supercharger")
-            elif "core reperk" in item_lower and "Core Reperk" not in valid_items:
-                valid_items.append("Core Reperk")
+        # گشتن به دنبال باکسی که دقیقاً مربوط به مأموریت 160 هفتگی است
+        target_nodes = soup.find_all(string=re.compile(r'Complete 10|160\+|Weekly', re.IGNORECASE))
+        
+        for node in target_nodes:
+            # بررسی تگ‌های دربرگیرنده (پدر) برای پیدا کردن باکس اصلی جایزه
+            parent = node.find_parent('div') or node.find_parent('tr') or node.find_parent('td')
+            if parent:
+                text_content = parent.get_text(separator=" ", strip=True).upper()
                 
-        if valid_items:
-            for item in valid_items:
-                # تعیین دقیق آیکون کاستوم بر اساس نام آیتم
-                item_upper = item.upper()
-                if "HERO" in item_upper:
-                    item_icon = "🦸‍♂️"
-                elif "WEAPON" in item_upper:
-                    item_icon = "⚔️"
-                elif "TRAP" in item_upper:
-                    item_icon = "🧩"
-                elif "SURVIVOR" in item_upper:
-                    item_icon = "👥"
-                elif "DEFENDER" in item_upper:
-                    item_icon = "🛡️"
-                elif "CORE" in item_upper or "REPERK" in item_upper:
-                    item_icon = "🛠️"
-                else:
-                    item_icon = "🚀"
+                if "SUPERCHARGER" in text_content or "CORE RE-PERK" in text_content or "REPERK" in text_content:
+                    if "WEAPON" in text_content:
+                        weekly_reward = "Weapon Supercharger"
+                    elif "HERO" in text_content:
+                        weekly_reward = "Hero Supercharger"
+                    elif "SURVIVOR" in text_content:
+                        weekly_reward = "Survivor Supercharger"
+                    elif "TRAP" in text_content:
+                        weekly_reward = "Trap Supercharger"
+                    elif "DEFENDER" in text_content:
+                        weekly_reward = "Defender Supercharger"
+                    elif "CORE" in text_content or "RE-PERK" in text_content:
+                        weekly_reward = "Core Re-PERK"
                     
-                # ظاهر ساده و تمیز همراه با آیکون جدید
-                final_message += f"{item_icon} **{item}**\n\n"
-        else:
-            unique_items = list(dict.fromkeys(weekly_found))
-            for item in unique_items[:3]:
-                final_message += f"🎁 **{item}**\n\n"
-            
-        return final_message.strip()
+                    if weekly_reward:
+                        break  # به محض پیدا کردن جایزه صحیح، جستجو متوقف می‌شود
+        
+        # اگر سایت ساختارش را تغییر داده بود و با روش بالا پیدا نشد، از روش پشتیبان استفاده می‌کنیم
+        if not weekly_reward:
+            for img in soup.find_all('img'):
+                alt_title = str(img.get('alt', '')).upper() + " " + str(img.get('title', '')).upper()
+                
+                if "SUPERCHARGER" in alt_title or "CORE RE-PERK" in alt_title:
+                    if "WEAPON" in alt_title: weekly_reward = "Weapon Supercharger"
+                    elif "HERO" in alt_title: weekly_reward = "Hero Supercharger"
+                    elif "SURVIVOR" in alt_title: weekly_reward = "Survivor Supercharger"
+                    elif "TRAP" in alt_title: weekly_reward = "Trap Supercharger"
+                    elif "DEFENDER" in alt_title: weekly_reward = "Defender Supercharger"
+                    elif "CORE" in alt_title: weekly_reward = "Core Re-PERK"
+                    
+                    if weekly_reward:
+                        break
+        
+        if not weekly_reward:
+            return "❌ **Error:** Could not determine this week's reward on FortniteDB."
+
+        # تخصیص آیکون بر اساس نوع جایزه
+        item_icon = "🚀"
+        if "HERO" in weekly_reward.upper(): item_icon = "🦸‍♂️"
+        elif "WEAPON" in weekly_reward.upper(): item_icon = "⚔️"
+        elif "TRAP" in weekly_reward.upper(): item_icon = "🧩"
+        elif "SURVIVOR" in weekly_reward.upper(): item_icon = "👥"
+        elif "DEFENDER" in weekly_reward.upper(): item_icon = "🛡️"
+        elif "CORE" in weekly_reward.upper(): item_icon = "🛠️"
+        
+        return f"🛠 **This Week's Reward:**\n\n{item_icon} **{weekly_reward}**"
+
     except Exception as e:
         return f"❌ Error fetching FortniteDB Weekly: {e}"
 EOF
 
-# Creating vbucks_bot.py (Max 200 users, no photo)
+# Creating vbucks_bot.py with Active Proxy and Fixed Timezone
 cat << 'EOF' > /root/fortnite_bot/vbucks_bot.py
 import logging
 import json
 import os
 from datetime import time, timezone
 from telegram import Update, ReplyKeyboardMarkup, KeyboardButton
-from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, MessageHandler, filters
+from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, MessageHandler, filters, Defaults
 
-# Uncomment the line below if you need a proxy:
-# from telegram.request import HTTPXRequest
+# فعال‌سازی کتابخانه رکوئست برای عبور از فیلترینگ
+from telegram.request import HTTPXRequest
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
 )
 
-# Proxy settings (commented by default)
-# PROXY_URL = "socks5://username:password@127.0.0.1:port"
+# Proxy Enable
+#PROXY_URL = "socks5://username:password@127.0.0.1:port"
 
 USERS_FILE = "/root/fortnite_bot/users.json"
 MAX_USERS = 200
@@ -294,7 +291,6 @@ def load_users():
 def save_user(chat_id):
     users = load_users()
     if chat_id not in users:
-        # ذخیره نهایتاً 200 کاربر
         if len(users) >= MAX_USERS:
             return
         users.add(chat_id)
@@ -360,46 +356,57 @@ async def weekly_reset_notification(context: ContextTypes.DEFAULT_TYPE):
     users = load_users()
     if not users:
         return
-    if context.job.datetime.weekday() == 2:  # Wednesdays
-        try:
-            weekly_data = get_weekly_superchargers()
-            message = (
-                "🚨 **Fortnite Weekly Reset & Superchargers!** 🛠\n"
-                "-----------------------------------\n\n"
-                f"{weekly_data}"
-            )
-            for chat_id in users:
-                try:
-                    await context.bot.send_message(chat_id=chat_id, text=message, parse_mode="Markdown")
-                except Exception as e:
-                    print(f"Failed to send weekly notification to {chat_id}: {e}")
-        except Exception as e:
-            print(f"Error in weekly notification data fetch: {e}")
+    try:
+        weekly_data = get_weekly_superchargers()
+        message = (
+            "🚨 **Fortnite Weekly Reset & Superchargers!** 🛠\n"
+            "-----------------------------------\n\n"
+            f"{weekly_data}"
+        )
+        for chat_id in users:
+            try:
+                await context.bot.send_message(chat_id=chat_id, text=message, parse_mode="Markdown")
+            except Exception as e:
+                print(f"Failed to send weekly notification to {chat_id}: {e}")
+    except Exception as e:
+        print(f"Error in weekly notification data fetch: {e}")
 
 if __name__ == '__main__':
-    # Uncomment if proxy is needed:
-    # t_request = HTTPXRequest(proxy=PROXY_URL)
-    # application = ApplicationBuilder().token("YOUR_TOKEN_PLACEHOLDER").request(t_request).get_updates_request(t_request).build()
-
     import os
     TOKEN = os.environ.get("BOT_TOKEN", "YOUR_TOKEN_PLACEHOLDER")
     
-    application = ApplicationBuilder().token(TOKEN).build()
+    # اعمال تنظیمات پروکسی
+    #t_request = HTTPXRequest(proxy=PROXY_URL)
+    
+    # قفل کردن کل ربات روی ساعت جهانی (UTC) برای اجرای بدون خطای تایم‌زون
+    # قفل کردن کل ربات روی ساعت جهانی (UTC) برای اجرای بدون خطای تایم‌زون
+    defaults = Defaults(tzinfo=timezone.utc)
+    
+    application = (
+        ApplicationBuilder()
+        .token(TOKEN)
+        #.request(t_request)
+        #.get_updates_request(t_request)
+        .defaults(defaults)
+        .build()
+    )
 
     job_queue = application.job_queue
+    
+# دیلی نوتیفیکیشن هر روز ساعت 00:01 UTC
     job_queue.run_daily(daily_reset_notification, time=time(hour=0, minute=1, tzinfo=timezone.utc))
-    job_queue.run_daily(weekly_reset_notification, time=time(hour=0, minute=1, tzinfo=timezone.utc))
+    
+    # ویکلی نوتیفیکیشن فقط در روزهای پنج‌شنبه (days=3) ساعت 00:01 به وقت UTC
+    job_queue.run_daily(weekly_reset_notification, time=time(hour=0, minute=1, tzinfo=timezone.utc), days=(3,))
 
     application.add_handler(CommandHandler("start", start))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_handler))
 
-    print("🤖 Telegram Bot is running...")
+    print("🤖 Telegram Bot is running with Active Proxy & UTC Timezone...")
     application.run_polling()
 EOF
 
-# Injecting the dynamically read token into the file securely
 sed -i "s/YOUR_TOKEN_PLACEHOLDER/$BOT_TOKEN/g" /root/fortnite_bot/vbucks_bot.py
-
 
 echo "[4/5] Setting up Systemd service for permanent execution..."
 cat << 'EOF' > /etc/systemd/system/vbucksbot.service
