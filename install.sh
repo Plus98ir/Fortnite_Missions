@@ -379,7 +379,6 @@ if __name__ == '__main__':
     #t_request = HTTPXRequest(proxy=PROXY_URL)
     
     # قفل کردن کل ربات روی ساعت جهانی (UTC) برای اجرای بدون خطای تایم‌زون
-    # قفل کردن کل ربات روی ساعت جهانی (UTC) برای اجرای بدون خطای تایم‌زون
     defaults = Defaults(tzinfo=timezone.utc)
     
     application = (
@@ -393,11 +392,11 @@ if __name__ == '__main__':
 
     job_queue = application.job_queue
     
-# دیلی نوتیفیکیشن هر روز ساعت 00:01 UTC
+    # دیلی نوتیفیکیشن هر روز ساعت 00:01 UTC
     job_queue.run_daily(daily_reset_notification, time=time(hour=0, minute=1, tzinfo=timezone.utc))
     
     # ویکلی نوتیفیکیشن فقط در روزهای پنج‌شنبه (days=3) ساعت 00:01 به وقت UTC
-    job_queue.run_daily(weekly_reset_notification, time=time(hour=0, minute=1, tzinfo=timezone.utc), days=(3,))
+    job_queue.run_daily(weekly_reset_notification, time=time(hour=0, minute=1, tzinfo=timezone.utc), days=(4,))
 
     application.add_handler(CommandHandler("start", start))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_handler))
@@ -412,7 +411,8 @@ echo "[4/5] Setting up Systemd service for permanent execution..."
 cat << 'EOF' > /etc/systemd/system/vbucksbot.service
 [Unit]
 Description=Fortnite Monitoring Telegram Bot
-After=network.target
+After=network.target time-sync.target
+Wants=time-sync.target
 
 [Service]
 Type=simple
