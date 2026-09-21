@@ -52,7 +52,7 @@
 روی یک سرور دبیان یا اوبونتو، با کاربر روت:
 
 ```bash
-bash <(curl -fsSL https://github.com/Plus98ir/Fortnite_Missions/releases/latest/download/install_fortnite_bot.sh)
+bash <(curl -fsSL https://github.com/Plus98ir/Fortnite_Missions/releases/latest/download/install.sh)
 ```
 
 نصب‌کننده توکن، آیدی ادمین و (به‌صورت اختیاری) پروکسی را می‌پرسد و بقیه کارها
