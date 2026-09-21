@@ -1,333 +1,510 @@
 <!DOCTYPE html>
-<html dir="rtl" lang="fa">
+<html lang="fa" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🤖 ربات تلگرام مأموریت‌های فورتنایت (Save the World)</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5.2.0/github-markdown-dark.css">
-    <style>
-        body {
-            font-family: Tahoma, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #0d1117;
-            color: #c9d1d9;
-        }
-        .markdown-body {
-            max-width: 900px;
-            margin: 0 auto;
-            direction: rtl !important;
-            text-align: right !important;
-        }
-        .markdown-body p, .markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4, .markdown-body ul, .markdown-body ol, .markdown-body li, .markdown-body blockquote {
-            text-align: right !important;
-            direction: rtl !important;
-        }
-        .markdown-body ul, .markdown-body ol {
-            padding-right: 2em !important;
-            padding-left: 0 !important;
-        }
-        .markdown-body blockquote {
-            border-right: 4px solid #30363d !important;
-            border-left: none !important;
-            padding-right: 1em !important;
-            padding-left: 0 !important;
-            margin-right: 0 !important;
-            color: #8b949e;
-        }
-        .lang-switcher table {
-            width: auto;
-            margin-bottom: 20px;
-            border-collapse: collapse;
-        }
-        .lang-switcher th, .lang-switcher td {
-            padding: 6px 13px;
-            border: 1px solid #30363d;
-        }
-        .markdown-body table {
-            display: table;
-            width: 100%;
-            direction: rtl;
-        }
-        .markdown-body th, .markdown-body td { text-align: right !important; }
-        /* کد و دستورها همیشه چپ‌چین می‌مانند */
-        .markdown-body pre, .markdown-body code {
-            direction: ltr !important;
-            text-align: left !important;
-        }
-        .badge-row { text-align: center; margin-bottom: 24px; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#1a0f33">
+<title>ربات تلگرام مأموریت‌های فورتنایت (Save the World)</title>
+<meta name="description" content="ربات تلگرام مأموریت‌های فورتنایت (Save the World)">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lalezar&family=Vazirmatn:wght@400;600;800&family=Rubik:wght@400;700&display=swap">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%233b1f7a'/%3E%3Cpath d='M18.6 4 8 18.2h6.6L12.4 28 24 12.9h-6.9z' fill='%23ffb13b'/%3E%3C/svg%3E">
+<style>
+:root{
+  --night:#1a0f33; --night-2:#231544; --line:#3a2a66;
+  --violet:#8b5cf6; --glow:#c08bff; --amber:#ffb13b; --teal:#3fd6c4;
+  --text:#efe9ff; --muted:#b7a9d9;
+  --display:"Bungee",system-ui,sans-serif;
+  --body:"Rubik",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+}
+html[lang="fa"]{
+  --display:"Lalezar","Vazirmatn",Tahoma,sans-serif;
+  --body:"Vazirmatn",Tahoma,sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{color-scheme:dark;-webkit-text-size-adjust:100%;scroll-padding-top:112px}
+body{
+  margin:0;color:var(--text);font-family:var(--body);
+  font-size:1.0625rem;line-height:1.65;
+  background:
+    radial-gradient(90rem 34rem at 50% -9rem,#3a1d7a 0%,rgba(58,29,122,.35) 42%,transparent 72%),
+    var(--night);
+}
+html[lang="fa"] body{line-height:1.9}
+a{color:var(--glow);text-underline-offset:3px}
+a:hover{color:#fff}
+:focus-visible{outline:2px solid var(--amber);outline-offset:3px;border-radius:4px}
+.wrap{max-width:1080px;margin-inline:auto;padding-inline:clamp(16px,4vw,32px)}
+.prose{max-width:760px}
+
+/* header ------------------------------------------------------------ */
+.top{position:sticky;top:0;z-index:10;background:rgba(26,15,51,.82);
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.top-row{display:flex;align-items:center;gap:16px;min-height:58px}
+.brand{display:flex;align-items:center;gap:10px;color:var(--text);text-decoration:none;font-weight:700}
+.brand svg{width:30px;height:30px;flex:none}
+.brand:hover{color:var(--text)}
+.lang{margin-inline-start:auto;display:flex;border:1px solid var(--line);border-radius:999px;padding:3px}
+.lang a{padding:3px 12px;border-radius:999px;color:var(--muted);text-decoration:none;font-size:.9rem}
+.lang a[aria-current="page"]{background:var(--night-2);color:var(--text)}
+.toc ul{display:flex;gap:2px;overflow-x:auto;list-style:none;margin:0;padding:0 0 8px;scrollbar-width:none}
+.toc ul::-webkit-scrollbar{display:none}
+.toc a{display:block;white-space:nowrap;padding:3px 10px;border-radius:999px;color:var(--muted);
+  text-decoration:none;font-size:.875rem}
+.toc a:hover{color:var(--text);background:var(--night-2)}
+
+/* hero -------------------------------------------------------------- */
+.hero{display:grid;grid-template-columns:1.15fr .85fr;gap:clamp(28px,5vw,56px);align-items:center;
+  padding-block:clamp(40px,8vw,88px) clamp(40px,6vw,72px)}
+@media (max-width:840px){.hero{grid-template-columns:1fr}}
+.hero h1{font-family:var(--display);font-weight:400;font-size:clamp(2rem,5.4vw,3.6rem);
+  line-height:1.06;margin:0 0 18px}
+html[lang="fa"] .hero h1{line-height:1.4}
+.hero h1 small{display:block;font-size:.5em;color:var(--glow);margin-top:.35em}
+html[lang="fa"] .hero h1 small{text-align:right}
+html[lang="en"] .hero h1{font-size:clamp(1.9rem,4.6vw,3.1rem)}
+.lede{color:var(--muted);font-size:1.125rem;max-width:54ch;margin:0 0 28px}
+.actions{display:flex;flex-wrap:wrap;gap:12px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:12px 20px;border-radius:12px;font-weight:700;
+  text-decoration:none;font-size:1rem;border:2px solid transparent;line-height:1.3}
+.btn-primary{background:var(--amber);color:#2a1600}
+.btn-primary:hover{background:#ffc566;color:#2a1600}
+.btn-ghost{border-color:var(--line);color:var(--text)}
+.btn-ghost:hover{border-color:var(--glow);color:var(--text)}
+.fineprint{color:var(--muted);font-size:.9rem;margin:14px 0 0;max-width:54ch}
+
+.reset{margin-top:32px;padding:16px 18px;border:1px solid var(--line);border-radius:16px;
+  background:rgba(35,21,68,.6);max-width:420px}
+.reset-label{display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px 12px;color:var(--muted);font-size:.9rem}
+.clock{font-family:var(--display);font-size:clamp(2.1rem,6vw,2.8rem);color:var(--amber);line-height:1.15;
+  margin:6px 0 12px;font-variant-numeric:tabular-nums;direction:ltr;text-align:start}
+html[lang="fa"] .clock{text-align:end}
+.bar{height:6px;border-radius:99px;background:var(--line);overflow:hidden}
+.bar::after{content:"";display:block;height:100%;transform:scaleX(var(--p,0));transform-origin:left;
+  background:linear-gradient(90deg,var(--violet),var(--glow));transition:transform 1s linear}
+[dir="rtl"] .bar::after{transform-origin:right;background:linear-gradient(270deg,var(--violet),var(--glow))}
+
+/* the alert mock-up */
+.alert{margin:0;justify-self:center;width:min(100%,380px)}
+.chat{background:#2b1b52;border:1px solid var(--line);border-radius:22px;padding:14px;
+  box-shadow:0 34px 70px -34px rgba(0,0,0,.7),0 0 0 1px rgba(192,139,255,.08)}
+.chat-head{display:flex;align-items:center;gap:10px;padding:2px 6px 12px;border-bottom:1px solid var(--line);margin-bottom:14px}
+.avatar{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;flex:none;
+  background:radial-gradient(circle at 30% 30%,#7a4df0,#3b1f7a)}
+.avatar svg{width:22px;height:22px}
+.chat-head b{display:block;font-size:.95rem;line-height:1.3}
+.chat-head small{color:var(--muted);font-size:.8rem}
+.bubble{background:#f4efff;color:#1b1233;border-radius:16px 16px 16px 4px;padding:12px 14px 8px;
+  font-size:.94rem;line-height:1.5;font-family:"Rubik",system-ui,sans-serif;
+  animation:arrive .6s .3s both cubic-bezier(.2,.8,.2,1)}
+.bubble p{margin:0 0 3px}
+.bubble .m{font-family:var(--mono);font-size:.86rem}
+.bubble ul{list-style:none;margin:2px 0 6px;padding:0 0 0 18px}
+.bubble li::before{content:"▪ ";color:#6b3fd6}
+.bubble code{font-family:var(--mono);font-size:.84rem;background:#e6dcff;padding:0 4px;border-radius:4px}
+.bubble time{display:block;text-align:right;font-size:.75rem;color:#7a6aa3;margin-top:4px}
+.alert figcaption{text-align:center;color:var(--muted);font-size:.85rem;margin-top:12px}
+@keyframes arrive{from{opacity:0;transform:translateY(16px) scale(.97)}}
+
+/* sections ---------------------------------------------------------- */
+section{padding-block:clamp(40px,6vw,64px);border-top:1px solid var(--line)}
+h2{font-size:clamp(1.5rem,3vw,2rem);line-height:1.25;margin:0 0 16px;font-weight:700}
+html[lang="fa"] h2{font-weight:800}
+h3{font-size:1.15rem;margin:28px 0 10px;line-height:1.35}
+p{margin:0 0 14px}
+ul,ol{padding-inline-start:1.3em;margin:0 0 14px}
+li{margin-bottom:6px}
+.intro{color:var(--muted);max-width:62ch}
+code{font-family:var(--mono);font-size:.88em;background:rgba(139,92,246,.18);padding:.1em .4em;
+  border-radius:6px;direction:ltr;unicode-bidi:isolate}
+
+/* feature board: rows, not cards */
+.board{list-style:none;margin:24px 0 0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:44px}
+@media (max-width:720px){.board{grid-template-columns:1fr}}
+.board li{display:grid;grid-template-columns:42px 1fr;gap:14px;padding:16px 0;margin:0;border-bottom:1px solid var(--line)}
+.board .ic{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:var(--night-2);font-size:20px}
+.board b{display:block;margin-bottom:2px}
+.board span{color:var(--muted);font-size:.97rem}
+
+/* install steps: a real sequence, so it is numbered */
+.steps{list-style:none;counter-reset:step;margin:28px 0 0;padding:0}
+.steps>li{counter-increment:step;position:relative;padding-inline-start:64px;padding-bottom:30px;margin:0}
+.steps>li::before{content:counter(step);position:absolute;inset-inline-start:0;top:-6px;width:46px;text-align:center;
+  font-family:var(--display);font-size:2.1rem;line-height:1.2;color:var(--amber)}
+html[lang="fa"] .steps>li::before{content:counter(step,persian)}
+.steps>li:not(:last-child)::after{content:"";position:absolute;inset-inline-start:22px;top:48px;bottom:8px;width:2px;background:var(--line)}
+.steps h3{margin:0 0 10px}
+html[lang="fa"] ol:not(.steps){list-style-type:persian}
+@media (max-width:560px){.steps>li{padding-inline-start:48px}.steps>li::before{width:34px}.steps>li:not(:last-child)::after{inset-inline-start:16px}}
+
+/* code with copy button */
+.code{position:relative;margin:14px 0;direction:ltr}
+.code pre{margin:0;background:#120a26;border:1px solid var(--line);border-radius:12px;
+  padding:16px 90px 16px 16px;overflow-x:auto;font-size:.9rem;line-height:1.6;text-align:left}
+.code pre code{background:none;padding:0;font-size:inherit;border-radius:0}
+.copy{position:absolute;top:10px;right:10px;font:inherit;font-size:.85rem;font-weight:600;color:var(--text);
+  background:var(--night-2);border:1px solid var(--line);border-radius:8px;padding:4px 12px;cursor:pointer}
+html[lang="fa"] .copy{font-family:"Vazirmatn",Tahoma,sans-serif}
+.copy:hover{border-color:var(--glow)}
+.copy.done{color:#0f2e2a;background:var(--teal);border-color:var(--teal)}
+
+/* callouts: violet = good to know, amber = can go wrong */
+.note{margin:18px 0;padding:14px 18px;border-radius:12px;background:rgba(139,92,246,.12);border-inline-start:4px solid var(--violet)}
+.note.warn{background:rgba(255,177,59,.1);border-inline-start-color:var(--amber)}
+.note p:last-child{margin:0}
+
+/* tables */
+.table-wrap{overflow-x:auto;margin:16px 0;border:1px solid var(--line);border-radius:12px}
+table{width:100%;border-collapse:collapse;font-size:.95rem}
+th,td{padding:10px 14px;text-align:start;vertical-align:top;border-bottom:1px solid var(--line)}
+tbody tr:last-child td{border-bottom:0}
+thead th{color:var(--muted);font-weight:600;background:rgba(35,21,68,.75)}
+td:first-child{white-space:nowrap}
+
+/* expandable blocks */
+details{border:1px solid var(--line);border-radius:12px;margin:10px 0;background:rgba(35,21,68,.45)}
+summary{cursor:pointer;list-style:none;padding:14px 18px;font-weight:700;display:flex;align-items:center;gap:12px}
+summary::-webkit-details-marker{display:none}
+summary code{overflow-wrap:anywhere}
+summary::after{content:"+";margin-inline-start:auto;font-size:1.35rem;line-height:1;color:var(--glow);transition:transform .2s}
+details[open] summary::after{transform:rotate(45deg)}
+details>div{padding:0 18px 8px}
+
+footer{border-top:1px solid var(--line);padding-block:32px 48px;text-align:center;color:var(--muted);font-size:.9rem}
+footer img{max-width:100%;height:auto}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+}
+</style>
 </head>
-
 <body>
-    <div class="markdown-body">
-
-        <div class="badge-row">
-            <a href="https://Plus98ir.github.io">
-                <img src="https://img.shields.io/badge/Website-Plus98ir.github.io-blue?style=for-the-badge&logo=google-chrome" alt="Web Page">
-            </a>
-        </div>
-
-        <h1>🤖 ربات تلگرام مأموریت‌های فورتنایت (Save the World)</h1>
-
-        <div class="lang-switcher">
-            <table>
-                <tbody>
-                    <tr>
-                        <td><a href="index.html">🇺🇸 English</a></td>
-                        <td><strong>🇮🇷 فارسی</strong></td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <hr>
-
-        <p>یک ربات تلگرام دوزبانه (فارسی / انگلیسی) که مأموریت‌های فورتنایت
-        <em>Save the World</em> را دنبال می‌کند: مأموریت‌های وی‌باکس، پاور ۱۶۰،
-        ونچر ۱۴۰، جایزه هفتگی و تایمر سیزن‌ها. با یک دستور به‌صورت یک سرویس
-        امن روی سرور نصب می‌شود.</p>
-
-        <h2>📋 امکانات</h2>
-        <ul>
-            <li><strong>هشدار وی‌باکس:</strong> همه مأموریت‌های روزانه‌ای که جایزه آلرتشان وی‌باکس دارد، همراه با مقدارش.</li>
-            <li><strong>مأموریت‌های پاور ۱۶۰:</strong> مأموریت‌های اندگیم با لیست کامل جوایز آلرت و پایه.</li>
-            <li><strong>مأموریت‌های ونچر ۱۴۰:</strong> فقط مأموریت‌های ونچر با پاور ۱۴۰. دانجن‌ها حذف می‌شوند.</li>
-            <li><strong>جایزه هفتگی:</strong> مشخص می‌کند این هفته کدام سوپرچارجر (Hero / Survivor / Weapon / Trap / Defender) یا Core RE-PERK ارائه شده است.</li>
-            <li><strong>تایمر سیزن‌ها:</strong> شمارش معکوس زنده بتل‌پس و ونچر همراه با نوار پیشرفت.</li>
-            <li><strong>فیلتر شخصی هر کاربر:</strong> هر کاربر زون‌های دلخواهش (Stonewood تا Twine Peaks)، نوع جوایز مورد علاقه و حداقل مقدار وی‌باکس را انتخاب می‌کند. این فیلترها روی اعلان روزانه هم اعمال می‌شوند.</li>
-            <li><strong>اعلان خودکار:</strong> خلاصه روزانه ۱ دقیقه بعد از ریست ۰۰:۰۰ UTC و جایزه هفتگی ۲ دقیقه بعد از ریست پنجشنبه. هر کاربر می‌تواند خاموشش کند.</li>
-            <li><strong>دوزبانه:</strong> فارسی و انگلیسی، قابل تعویض برای هر کاربر در هر لحظه.</li>
-            <li><strong>پنل مدیریت:</strong> آمار، پیام همگانی با پیش‌نمایش، مسدودسازی، خروجی و بازگردانی CSV.</li>
-            <li><strong>نصب تک‌دستوری:</strong> توکن، آیدی ادمین و پروکسی اختیاری را می‌پرسد و همه‌چیز را آماده می‌کند.</li>
-        </ul>
-
-        <h2>⚙️ مرحله ۱: دریافت توکن ربات</h2>
-        <ol>
-            <li>تلگرام را باز کنید و <code>@BotFather</code> را جستجو کنید.</li>
-            <li>دستور <code>/newbot</code> را بفرستید.</li>
-            <li>یک نام نمایشی و سپس یک نام کاربری یکتا که به <code>bot</code> ختم شود انتخاب کنید (مثلاً <code>FortniteAlertsBot</code>).</li>
-            <li>توکن HTTP API را کپی کنید.</li>
-            <li>آیدی عددی خودتان را از <code>@userinfobot</code> بگیرید؛ همان آیدی ادمین است.</li>
-        </ol>
-
-        <blockquote>
-            <p><strong>⚠️ هشدار:</strong> توکن ربات را جایی منتشر نکنید و در گیت‌هاب قرار ندهید.
-            نصب‌کننده آن را در فایلی ذخیره می‌کند که فقط روت می‌تواند بخواند، نه داخل سورس کد.</p>
-        </blockquote>
-
-        <h2>🚀 مرحله ۲: نصب</h2>
-        <p>روی یک سرور دبیان یا اوبونتو، با کاربر روت:</p>
-        <pre><code class="language-bash">bash &lt;(curl -fsSL https://github.com/Plus98ir/Fortnite_Missions/releases/latest/download/install.sh)</code></pre>
-
-        <blockquote>
-            <p>حتماً از <code>bash &lt;(curl ...)</code> استفاده کنید، نه <code>curl ... | bash</code>.
-            نصب‌کننده سؤال می‌پرسد و حالت دوم جواب‌های شما را می‌بلعد.</p>
-        </blockquote>
-
-        <p>اگر ترجیح می‌دهید اول اسکریپت را بخوانید:</p>
-        <pre><code class="language-bash">curl -fsSLO https://github.com/Plus98ir/Fortnite_Missions/releases/latest/download/install.sh
-sudo bash install.sh</code></pre>
-
-        <p>نصب‌کننده این‌ها را می‌پرسد:</p>
-        <ul>
-            <li>توکن ربات (قبل از استفاده اعتبارسنجی می‌شود و روی صفحه نمایش داده نمی‌شود)؛</li>
-            <li>آیدی عددی ادمین؛</li>
-            <li>اینکه پروکسی لازم دارید یا نه — و اگر بله، نوع، آدرس، پورت و نام‌کاربری/رمز.</li>
-        </ul>
-
-        <p>قبل از استارت سرویس، اتصال را هم مستقیم و هم از طریق پروکسی تست می‌کند و
-        می‌گوید کدام‌یک کار می‌کند. اجرای دوباره نصب‌کننده، کد را به‌روز می‌کند و
-        تنظیمات فعلی را نگه می‌دارد.</p>
-
-        <h2>🌐 تنظیم پروکسی</h2>
-        <p>دیگر لازم نیست هیچ فایل پایتونی را ویرایش کنید. پروکسی یکی از سؤال‌های نصب است
-        و هر وقت خواستید با <code>fnbot config</code> قابل تغییر است.</p>
-
-        <blockquote>
-            <p><strong>توجه:</strong> پروکسی فقط وقتی لازم است که خود <em>سرور</em> نتواند به
-            <code>api.telegram.org</code> برسد — معمولاً سرور ایران. سرور خارج از کشور اصلاً
-            به پروکسی نیاز ندارد. اگر <code>127.0.0.1</code> وارد می‌کنید، یادتان باشد یعنی
-            لوکال‌هاست <em>خودِ سرور</em>، نه کامپیوتر شما.</p>
-        </blockquote>
-
-        <p>پروکسی‌های SOCKS5 برای اسکرپینگ به‌صورت خودکار به <code>socks5h</code> ارتقا داده
-        می‌شوند تا DNS از داخل پروکسی حل شود و نشتی به ریزالور محلی نداشته باشد.</p>
-
-        <h2>🎛 مدیریت</h2>
-        <p>نصب‌کننده دستور <code>fnbot</code> را اضافه می‌کند:</p>
-        <table>
-            <thead><tr><th>دستور</th><th>کاری که می‌کند</th></tr></thead>
-            <tbody>
-                <tr><td><code>fnbot status</code></td><td>وضعیت سرویس</td></tr>
-                <tr><td><code>fnbot logs</code></td><td>نمایش زنده لاگ</td></tr>
-                <tr><td><code>fnbot errors</code></td><td>فقط خط‌های خطا</td></tr>
-                <tr><td><code>fnbot test</code></td><td>تست اتصال به تلگرام، مستقیم و با پروکسی</td></tr>
-                <tr><td><code>fnbot config</code></td><td>ویرایش تنظیمات و ری‌استارت خودکار</td></tr>
-                <tr><td><code>fnbot restart</code></td><td>ری‌استارت سرویس</td></tr>
-                <tr><td><code>fnbot uninstall</code></td><td>حذف سرویس (تنظیمات و کاربران حفظ می‌شوند)</td></tr>
-            </tbody>
-        </table>
-
-        <h2>🔧 فایل تنظیمات</h2>
-        <p>همه‌چیز در <code>/etc/fortnite_bot/bot.env</code> است (دسترسی 0640، مالک root:fnbot):</p>
-        <table>
-            <thead><tr><th>تنظیم</th><th>پیش‌فرض</th><th>توضیح</th></tr></thead>
-            <tbody>
-                <tr><td><code>MAX_USERS</code></td><td>200</td><td>سقف تعداد کاربران</td></tr>
-                <tr><td><code>DAILY_RESET_UTC</code></td><td>00:01</td><td>زمان اعلان روزانه</td></tr>
-                <tr><td><code>WEEKLY_RESET_UTC</code></td><td>00:02</td><td>زمان اعلان هفتگی</td></tr>
-                <tr><td><code>WEEKLY_RESET_WEEKDAY</code></td><td>3</td><td>۰ = دوشنبه، ۳ = پنجشنبه</td></tr>
-                <tr><td><code>SEASON_START_UTC</code></td><td>—</td><td>شروع سیزن، برای نوار پیشرفت</td></tr>
-                <tr><td><code>SEASON_END_UTC</code></td><td>—</td><td>جایگزین در صورت شکست دریافت آنلاین</td></tr>
-                <tr><td><code>DEFAULT_LANG</code></td><td>en</td><td><code>en</code> یا <code>fa</code></td></tr>
-                <tr><td><code>LOG_LEVEL</code></td><td>INFO</td><td>برای عیب‌یابی روی <code>DEBUG</code> بگذارید</td></tr>
-            </tbody>
-        </table>
-
-        <p>بعد از ویرایش، <code>fnbot restart</code> بزنید — یا از همان <code>fnbot config</code>
-        استفاده کنید که خودش ری‌استارت می‌کند.</p>
-
-        <h2>👑 پنل مدیریت</h2>
-        <p>فقط آیدی ادمینی که در تنظیمات ثبت شده، دکمه <code>👑 Admin</code> را می‌بیند.</p>
-        <ul>
-            <li><strong>آمار:</strong> تعداد کل کاربران، مشترکان اعلان، مسدودها و کاربران دارای فیلتر.</li>
-            <li><strong>پیام همگانی:</strong> دکمه را بزنید و بعد متن را بفرستید، یا
-                <code>/broadcast متن پیام</code> را استفاده کنید. در هر دو حالت قبل از ارسال
-                پیش‌نمایش با دکمه تأیید/لغو می‌گیرید. <code>/cancel</code> هم لغو می‌کند.</li>
-            <li><strong>خروجی:</strong> <code>/export</code> یک فایل CSV از همه کاربران همراه با
-                زبان، وضعیت اعلان، وضعیت مسدودی و فیلترهایشان می‌فرستد.</li>
-            <li><strong>بازگردانی:</strong> همان فایل CSV (یا یک <code>users.json</code> قدیمی) را
-                برای ربات بفرستید. کاربران موجود به‌روز و جدیدها اضافه می‌شوند؛ هیچ‌کس حذف نمی‌شود.</li>
-            <li><strong>مسدودسازی:</strong> <code>/ban ID</code>، <code>/unban ID</code>،
-                <code>/banned</code>. کاربر مسدود کاملاً نادیده گرفته می‌شود و اعلان نمی‌گیرد.</li>
-            <li><strong>رفرش:</strong> <code>/refresh</code> کش را پاک و داده را دوباره دریافت می‌کند.</li>
-        </ul>
-
-        <h2>⚡ کش</h2>
-        <p>داده مأموریت‌ها فقط سر ریست بازی عوض می‌شود، پس کش به‌جای مدت ثابت،
-        <em>تا ریست بعدی</em> معتبر است:</p>
-        <table>
-            <thead><tr><th>داده</th><th>اعتبار تا</th><th>بقا بعد از ری‌استارت</th></tr></thead>
-            <tbody>
-                <tr><td>مأموریت‌ها (وی‌باکس / ۱۶۰ / ونچر)</td><td>ریست ۰۰:۰۰ بعدی</td><td>بله</td></tr>
-                <tr><td>جایزه هفتگی</td><td>ریست پنجشنبه بعدی</td><td>بله</td></tr>
-                <tr><td>تاریخ پایان سیزن</td><td>روزانه</td><td>خیر</td></tr>
-            </tbody>
-        </table>
-        <p>تا ۲۰ دقیقه بعد از ریست، کش با فاصله کوتاه‌تری به‌روز می‌شود، چون ممکن است
-        منبع هنوز داده جدید را منتشر نکرده باشد. اگر دریافت شکست بخورد، به‌جای خطا
-        داده قبلی نمایش داده می‌شود.</p>
-
-        <h2>🔐 امنیت</h2>
-        <ul>
-            <li>ربات با کاربر سیستمی بدون دسترسی <code>fnbot</code> اجرا می‌شود، نه روت.</li>
-            <li>اطلاعات حساس در فایلی با دسترسی 0640 است، نه داخل سورس یا یونیت systemd.</li>
-            <li>رمز پروکسی از تمام خط‌های لاگ حذف می‌شود.</li>
-            <li>یونیت systemd سندباکس شده است: <code>ProtectSystem=strict</code>،
-                <code>NoNewPrivileges</code>، مجموعه capability خالی و فیلتر syscall.</li>
-            <li>وابستگی‌ها داخل virtualenv نصب می‌شوند و پایتون سیستم دست‌نخورده می‌ماند.</li>
-            <li>تمام متن‌های دریافتی قبل از ارسال به تلگرام HTML-escape می‌شوند.</li>
-        </ul>
-
-        <h2>🆕 تغییرات نسخه ۲</h2>
-        <p>اگر از نسخه اول می‌آیید، این‌ها فرق کرده است.</p>
-
-        <h3>امنیت</h3>
-        <ul>
-            <li>توکن دیگر با <code>sed</code> داخل سورس پایتون تزریق نمی‌شود و از فایل محیطی خوانده می‌شود.</li>
-            <li>رمز پروکسی دیگر داخل یونیت systemd (که برای همه قابل خواندن بود) نوشته نمی‌شود و در ترمینال و لاگ هم چاپ نمی‌شود.</li>
-            <li>سرویس از <code>root</code> به یک کاربر اختصاصی با یونیت سندباکس‌شده منتقل شد.</li>
-            <li><code>pip --break-system-packages</code> با virtualenv جایگزین شد.</li>
-            <li>نام‌کاربری و رمز پروکسی URL-encode می‌شوند، پس کاراکترهای خاص دیگر اتصال را خراب نمی‌کنند.</li>
-        </ul>
-
-        <h3>رفع باگ</h3>
-        <ul>
-            <li>درخواست‌های HTTP تایم‌اوت نداشتند و می‌توانستند برای همیشه هنگ کنند — حالا محدود شده و با retry و backoff کار می‌کنند.</li>
-            <li>منبع مأموریت‌ها هم به‌صورت JSON خام و هم JSON تعبیه‌شده در صفحه پارس می‌شود، نه فقط حالت دوم.</li>
-            <li><code>PySocks</code> نصب نمی‌شد، پس پروکسی SOCKS برای اسکرپینگ هیچ‌وقت کار نمی‌کرد.</li>
-            <li>فرمت Markdown با وجود <code>*</code> یا <code>_</code> در نام مأموریت می‌شکست — به HTML امن تغییر کرد.</li>
-            <li>جاب هفتگی از شماره روزی استفاده می‌کرد که در نسخه‌های مختلف
-                python-telegram-bot معنی متفاوتی دارد؛ حالا روز هفته داخل کد بررسی می‌شود.</li>
-            <li>درخواست‌های همگام داخل هندلرهای async کل event loop را قفل می‌کردند — به ترد جداگانه منتقل شدند.</li>
-            <li><code>users.json</code> غیراتمیک نوشته می‌شد و امکان خراب شدنش بود.</li>
-            <li>پیام همگانی محدودیت نرخ نداشت و می‌توانست به flood limit تلگرام بخورد.</li>
-            <li>محاسبه چرخه ونچر سر تحویل سال اشتباه بود.</li>
-            <li>پیام‌های بلندتر از ۴۰۹۶ کاراکتر بی‌صدا حذف می‌شدند — حالا تکه‌تکه می‌شوند.</li>
-            <li>با python-telegram-bot نسخه ۲۰، ۲۱ و ۲۲ کار می‌کند (API کلاس <code>Defaults</code> در نسخه ۲۲ عوض شد).</li>
-            <li>قطعی شبکه موقع استارت دیگر سرویس را وارد حلقه ری‌استارت نمی‌کند.</li>
-            <li>تایمر بتل‌پس وقتی دریافت آنلاین شکست بخورد، به تاریخ داخل تنظیمات برمی‌گردد.</li>
-        </ul>
-
-        <h3>قابلیت‌های جدید</h3>
-        <ul>
-            <li>مأموریت‌های ونچر ۱۴۰ با حذف دانجن‌ها.</li>
-            <li>فیلتر شخصی زون / جایزه / حداقل وی‌باکس برای هر کاربر.</li>
-            <li>دکمه روشن و خاموش کردن اعلان‌ها برای هر کاربر.</li>
-            <li>پنل مدیریت کامل: پیام همگانی با پیش‌نمایش، مسدودسازی، خروجی، بازگردانی و رفرش.</li>
-            <li>کش هماهنگ با ریست که روی دیسک هم ذخیره می‌شود.</li>
-            <li>دستور مدیریتی <code>fnbot</code>.</li>
-            <li>تست خودکار اتصال هنگام نصب.</li>
-        </ul>
-
-        <h2>⬆️ ارتقا از نسخه ۱</h2>
-        <p>فقط نصب‌کننده را اجرا کنید. سرویس قدیمی <code>vbucksbot.service</code> را غیرفعال
-        می‌کند، فایل <code>/root/fortnite_bot/users.json</code> را به مسیر جدید منتقل می‌کند و
-        تنظیمات زمان‌بندی قدیمی را به‌روز می‌کند. هیچ چیزی حذف نمی‌شود — پوشه قدیمی سر
-        جایش می‌ماند تا خودتان پاکش کنید.</p>
-
-        <h2>🩺 عیب‌یابی</h2>
-        <p>اول این دو را بزنید:</p>
-        <pre><code class="language-bash">fnbot errors
-fnbot test</code></pre>
-
-        <table>
-            <thead><tr><th>نشانه</th><th>علت</th></tr></thead>
-            <tbody>
-                <tr>
-                    <td><code>httpx.ConnectError: All connection attempts failed</code></td>
-                    <td>سرور به تلگرام نمی‌رسد. اگر پروکسی تنظیم کرده‌اید، چیزی روی آن آدرس گوش نمی‌دهد — با <code>ss -ltnp | grep PORT</code> بررسی کنید. اغلب راه‌حل، حذف کامل پروکسی است.</td>
-                </tr>
-                <tr>
-                    <td><code>401 Unauthorized</code></td>
-                    <td>توکن اشتباه یا باطل شده است. از BotFather یکی جدید بگیرید.</td>
-                </tr>
-                <tr>
-                    <td>لیست مأموریت‌ها خالی است</td>
-                    <td>سایت منبع فرمتش را عوض کرده، یا در بازه ۲۰ دقیقه‌ای بعد از ریست هستید. <code>/refresh</code> را امتحان کنید.</td>
-                </tr>
-                <tr>
-                    <td>لیست ونچر خالی است</td>
-                    <td>نام زون با الگوی ونچر مطابقت نکرده است. <code>fnbot logs</code> را ببینید.</td>
-                </tr>
-            </tbody>
-        </table>
-
-        <h2>📁 مسیرها</h2>
-        <table>
-            <thead><tr><th>مسیر</th><th>محتوا</th></tr></thead>
-            <tbody>
-                <tr><td><code>/opt/fortnite_bot/</code></td><td>کد برنامه و virtualenv</td></tr>
-                <tr><td><code>/etc/fortnite_bot/bot.env</code></td><td>توکن، آیدی ادمین، پروکسی و تنظیمات</td></tr>
-                <tr><td><code>/var/lib/fortnite_bot/</code></td><td><code>users.json</code> و فایل‌های کش</td></tr>
-                <tr><td><code>/etc/systemd/system/fortnite-bot.service</code></td><td>یونیت سرویس</td></tr>
-            </tbody>
-        </table>
-
-        <h2>📝 نکات</h2>
-        <ul>
-            <li>ظرفیت پیش‌فرض ۲۰۰ کاربر است؛ <code>MAX_USERS</code> را در تنظیمات تغییر دهید.</li>
-            <li>داده مأموریت‌ها از سایت‌های جامعه فورتنایت می‌آید. اگر یکی‌شان ساختارش را عوض کند، ربات آخرین داده موجود را نشان می‌دهد و در لاگ هشدار می‌گذارد.</li>
-            <li><code>SEASON_START_UTC</code> و <code>SEASON_END_UTC</code> را هر سیزن یک‌بار به‌روز کنید تا نوار پیشرفت بتل‌پس دقیق بماند.</li>
-        </ul>
-
-        <hr>
-        <div class="badge-row">
-            <a href="https://Plus98ir.github.io">
-                <img src="https://img.shields.io/badge/Website-Plus98ir.github.io-blue?style=for-the-badge&logo=google-chrome" alt="Web Page">
-            </a>
-        </div>
+<header class="top">
+  <div class="wrap">
+    <div class="top-row">
+      <a class="brand" href="#top"><svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9" fill="#3b1f7a"/><path d="M18.6 4 8 18.2h6.6L12.4 28 24 12.9h-6.9z" fill="#ffb13b"/></svg><span>Fortnite Missions</span></a>
+      <nav class="lang" aria-label="Language">
+        <a href="index.html" hreflang="en">English</a>
+        <a href="#" hreflang="fa" aria-current="page">فارسی</a>
+      </nav>
     </div>
+    <nav class="toc" aria-label="در این صفحه"><ul><li><a href="#features">امکانات</a></li><li><a href="#install">نصب</a></li><li><a href="#proxy">پروکسی</a></li><li><a href="#manage">fnbot</a></li><li><a href="#config">تنظیمات</a></li><li><a href="#admin">مدیریت</a></li><li><a href="#cache">کش</a></li><li><a href="#security">امنیت</a></li><li><a href="#changes">تغییرات</a></li><li><a href="#upgrade">ارتقا</a></li><li><a href="#troubleshooting">عیب‌یابی</a></li><li><a href="#paths">مسیرها</a></li></ul></nav>
+  </div>
+</header>
+<main id="top">
+
+<div class="wrap">
+  <div class="hero">
+    <div>
+      <h1>ربات تلگرام مأموریت‌های فورتنایت<small dir="ltr">Save the World</small></h1>
+      <p class="lede">یک ربات تلگرام دوزبانه (فارسی / انگلیسی) که مأموریت‌های فورتنایت <em>Save the World</em>
+      را دنبال می‌کند: مأموریت‌های وی‌باکس، پاور ۱۶۰، ونچر ۱۴۰، جایزه هفتگی و تایمر سیزن‌ها. با یک دستور
+      به‌صورت یک سرویس امن روی سرور نصب می‌شود.</p>
+      <div class="actions">
+        <a class="btn btn-primary" href="https://t.me/plus98vbucks_bot">باز کردن <span dir="ltr">@plus98vbucks_bot</span></a>
+        <a class="btn btn-ghost" href="#install">نصب روی سرور خودت</a>
+      </div>
+      <p class="fineprint">سرور ندارید؟ از ربات عمومی من استفاده کنید — فقط نمی‌دانم تا چه زمانی فعال می‌ماند.</p>
+      <div class="reset">
+        <div class="reset-label"><span>ریست روزانه بعدی</span><span>اعلان‌ها ساعت ۰۰:۰۱ UTC ارسال می‌شوند</span></div>
+        <div class="clock" id="reset-clock" role="timer" aria-label="زمان باقی‌مانده تا ریست ۰۰:۰۰ UTC">--:--:--</div>
+        <div class="bar" id="reset-bar" aria-hidden="true"></div>
+      </div>
+    </div>
+    <figure class="alert">
+  <div class="chat" dir="ltr">
+    <div class="chat-head"><span class="avatar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.8 2 4.5 14h5.9L8.6 22 19.5 9.1h-6.1z" fill="#ffb13b"/></svg></span><div><b>Fortnite Missions</b><small>bot</small></div></div>
+    <div class="bubble">
+      <p>🌍 <b>Hexsylvania Venture Zone</b></p>
+      <p class="m">🎯 Trap the Storm</p>
+      <p>⚡ Power 140</p>
+      <p class="m">🗺 Haunted Forest</p>
+      <p>🎁 Alert rewards:</p>
+      <ul>
+        <li>Survivor (Epic) <code>x1</code></li>
+        <li>Frost-Up! (Common) <code>x280</code></li>
+        <li>Venture Xp (Common) <code>x18000</code></li>
+      </ul>
+      <time>00:01</time>
+    </div>
+  </div>
+  <figcaption>یک اعلان روزانه، همان‌طور که در تلگرام می‌رسد</figcaption>
+</figure>
+  </div>
+</div>
+
+<section id="features"><div class="wrap">
+  <h2>📋 امکانات</h2>
+  <ul class="board">
+    <li><span class="ic">💎</span><div><b>هشدار وی‌باکس</b><span>همه مأموریت‌های روزانه‌ای که جایزه آلرتشان وی‌باکس دارد، همراه با مقدارش.</span></div></li>
+    <li><span class="ic">⚡</span><div><b>مأموریت‌های پاور ۱۶۰</b><span>مأموریت‌های اندگیم با لیست کامل جوایز آلرت و پایه.</span></div></li>
+    <li><span class="ic">🌴</span><div><b>مأموریت‌های ونچر ۱۴۰</b><span>فقط مأموریت‌های ونچر با پاور ۱۴۰. دانجن‌ها حذف می‌شوند.</span></div></li>
+    <li><span class="ic">🛠</span><div><b>جایزه هفتگی</b><span>مشخص می‌کند این هفته کدام سوپرچارجر (Hero / Survivor / Weapon / Trap / Defender) یا Core RE-PERK ارائه شده است.</span></div></li>
+    <li><span class="ic">⏱</span><div><b>تایمر سیزن‌ها</b><span>شمارش معکوس زنده بتل‌پس و ونچر همراه با نوار پیشرفت.</span></div></li>
+    <li><span class="ic">🎯</span><div><b>فیلتر شخصی هر کاربر</b><span>هر کاربر زون‌های دلخواهش (Stonewood تا Twine Peaks)، نوع جوایز مورد علاقه و حداقل مقدار وی‌باکس را انتخاب می‌کند. این فیلترها روی اعلان روزانه هم اعمال می‌شوند.</span></div></li>
+    <li><span class="ic">🔔</span><div><b>اعلان خودکار</b><span>خلاصه روزانه ۱ دقیقه بعد از ریست ۰۰:۰۰ UTC و جایزه هفتگی ۲ دقیقه بعد از ریست پنجشنبه. هر کاربر می‌تواند خاموشش کند.</span></div></li>
+    <li><span class="ic">🌐</span><div><b>دوزبانه</b><span>فارسی و انگلیسی، قابل تعویض برای هر کاربر در هر لحظه.</span></div></li>
+    <li><span class="ic">👑</span><div><b>پنل مدیریت</b><span>آمار، پیام همگانی با پیش‌نمایش، مسدودسازی، خروجی و بازگردانی CSV.</span></div></li>
+    <li><span class="ic">🚀</span><div><b>نصب تک‌دستوری</b><span>توکن، آیدی ادمین و پروکسی اختیاری را می‌پرسد و همه‌چیز را آماده می‌کند.</span></div></li>
+  </ul>
+</div></section>
+
+<section id="install"><div class="wrap prose">
+  <h2>🚀 نصب</h2>
+  <ol class="steps">
+    <li>
+      <h3>دریافت توکن ربات</h3>
+      <ol>
+        <li>تلگرام را باز کنید و <code>@BotFather</code> را جستجو کنید.</li>
+        <li>دستور <code>/newbot</code> را بفرستید.</li>
+        <li>یک نام نمایشی و سپس یک نام کاربری یکتا که به <code>bot</code> ختم شود انتخاب کنید (مثلاً <code>FortniteAlertsBot</code>).</li>
+        <li>توکن HTTP API را کپی کنید.</li>
+        <li>آیدی عددی خودتان را از <code>@userinfobot</code> بگیرید؛ همان آیدی ادمین است.</li>
+      </ol>
+      <div class="note warn"><p><strong>⚠️ هشدار:</strong> توکن ربات را جایی منتشر نکنید و در گیت‌هاب قرار ندهید.
+      نصب‌کننده آن را در فایلی ذخیره می‌کند که فقط روت می‌تواند بخواند، نه داخل سورس کد.</p></div>
+    </li>
+    <li>
+      <h3>اجرای نصب‌کننده</h3>
+      <p>روی یک سرور دبیان یا اوبونتو، با کاربر روت:</p>
+      <div class="code"><pre><code>bash &lt;(curl -fsSL https://github.com/Plus98ir/Fortnite_Missions/releases/latest/download/install_fortnite_bot.sh)</code></pre><button class="copy" type="button" data-done="کپی شد">کپی</button></div>
+      <div class="note"><p>حتماً از <code>bash&nbsp;&lt;(curl&nbsp;...)</code> استفاده کنید، نه <code>curl&nbsp;...&nbsp;|&nbsp;bash</code>.
+      نصب‌کننده سؤال می‌پرسد و حالت دوم جواب‌های شما را می‌بلعد.</p></div>
+      <p>اگر ترجیح می‌دهید اول اسکریپت را بخوانید:</p>
+      <div class="code"><pre><code>curl -fsSLO https://github.com/Plus98ir/Fortnite_Missions/releases/latest/download/install_fortnite_bot.sh
+sudo bash install_fortnite_bot.sh</code></pre><button class="copy" type="button" data-done="کپی شد">کپی</button></div>
+    </li>
+    <li>
+      <h3>جواب دادن به سه سؤال</h3>
+      <ul>
+        <li>توکن ربات (قبل از استفاده اعتبارسنجی می‌شود و روی صفحه نمایش داده نمی‌شود)؛</li>
+        <li>آیدی عددی ادمین؛</li>
+        <li>اینکه پروکسی لازم دارید یا نه — و اگر بله، نوع، آدرس، پورت و نام‌کاربری/رمز.</li>
+      </ul>
+      <p>قبل از استارت سرویس، اتصال را هم مستقیم و هم از طریق پروکسی تست می‌کند و می‌گوید کدام‌یک کار می‌کند.
+      اجرای دوباره نصب‌کننده، کد را به‌روز می‌کند و تنظیمات فعلی را نگه می‌دارد.</p>
+    </li>
+  </ol>
+</div></section>
+
+<section id="proxy"><div class="wrap prose">
+  <h2>🌐 تنظیم پروکسی</h2>
+  <p>دیگر لازم نیست هیچ فایل پایتونی را ویرایش کنید. پروکسی یکی از سؤال‌های نصب است و هر وقت خواستید با
+  <code>fnbot config</code> قابل تغییر است.</p>
+  <div class="note warn"><p><strong>توجه:</strong> پروکسی فقط وقتی لازم است که خود <em>سرور</em> نتواند به
+  <code>api.telegram.org</code> برسد — معمولاً سرور ایران. سرور خارج از کشور اصلاً به پروکسی نیاز ندارد. اگر
+  <code>127.0.0.1</code> وارد می‌کنید، یادتان باشد یعنی لوکال‌هاست <em>خودِ سرور</em>، نه کامپیوتر شما.</p></div>
+  <p>پروکسی‌های SOCKS5 برای اسکرپینگ به‌صورت خودکار به <code>socks5h</code> ارتقا داده می‌شوند تا DNS از داخل
+  پروکسی حل شود و نشتی به ریزالور محلی نداشته باشد.</p>
+</div></section>
+
+<section id="manage"><div class="wrap prose">
+  <h2>🎛 مدیریت</h2>
+  <p>نصب‌کننده دستور <code>fnbot</code> را اضافه می‌کند:</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>دستور</th><th>کاری که می‌کند</th></tr></thead>
+    <tbody>
+      <tr><td><code>fnbot status</code></td><td>وضعیت سرویس</td></tr>
+      <tr><td><code>fnbot logs</code></td><td>نمایش زنده لاگ</td></tr>
+      <tr><td><code>fnbot errors</code></td><td>فقط خط‌های خطا</td></tr>
+      <tr><td><code>fnbot test</code></td><td>تست اتصال به تلگرام، مستقیم و با پروکسی</td></tr>
+      <tr><td><code>fnbot config</code></td><td>ویرایش تنظیمات و ری‌استارت خودکار</td></tr>
+      <tr><td><code>fnbot restart</code></td><td>ری‌استارت سرویس</td></tr>
+      <tr><td><code>fnbot uninstall</code></td><td>حذف سرویس (تنظیمات و کاربران حفظ می‌شوند)</td></tr>
+    </tbody>
+  </table></div>
+</div></section>
+
+<section id="config"><div class="wrap prose">
+  <h2>🔧 فایل تنظیمات</h2>
+  <p>همه‌چیز در <code>/etc/fortnite_bot/bot.env</code> است (دسترسی 0640، مالک root:fnbot):</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>تنظیم</th><th>پیش‌فرض</th><th>توضیح</th></tr></thead>
+    <tbody>
+      <tr><td><code>MAX_USERS</code></td><td>200</td><td>سقف تعداد کاربران</td></tr>
+      <tr><td><code>DAILY_RESET_UTC</code></td><td>00:01</td><td>زمان اعلان روزانه</td></tr>
+      <tr><td><code>WEEKLY_RESET_UTC</code></td><td>00:02</td><td>زمان اعلان هفتگی</td></tr>
+      <tr><td><code>WEEKLY_RESET_WEEKDAY</code></td><td>3</td><td>۰ = دوشنبه، ۳ = پنجشنبه</td></tr>
+      <tr><td><code>SEASON_START_UTC</code></td><td>—</td><td>شروع سیزن، برای نوار پیشرفت</td></tr>
+      <tr><td><code>SEASON_END_UTC</code></td><td>—</td><td>جایگزین در صورت شکست دریافت آنلاین</td></tr>
+      <tr><td><code>DEFAULT_LANG</code></td><td>en</td><td><code>en</code> یا <code>fa</code></td></tr>
+      <tr><td><code>LOG_LEVEL</code></td><td>INFO</td><td>برای عیب‌یابی روی <code>DEBUG</code> بگذارید</td></tr>
+    </tbody>
+  </table></div>
+  <p>بعد از ویرایش، <code>fnbot restart</code> بزنید — یا از همان <code>fnbot config</code> استفاده کنید که خودش
+  ری‌استارت می‌کند.</p>
+</div></section>
+
+<section id="admin"><div class="wrap prose">
+  <h2>👑 پنل مدیریت</h2>
+  <p class="intro">فقط آیدی ادمینی که در تنظیمات ثبت شده، دکمه <code>👑 Admin</code> را می‌بیند.</p>
+  <ul>
+    <li><strong>آمار:</strong> تعداد کل کاربران، مشترکان اعلان، مسدودها و کاربران دارای فیلتر.</li>
+    <li><strong>پیام همگانی:</strong> دکمه را بزنید و بعد متن را بفرستید، یا <code>/broadcast متن پیام</code> را
+      استفاده کنید. در هر دو حالت قبل از ارسال پیش‌نمایش با دکمه تأیید/لغو می‌گیرید. <code>/cancel</code> هم لغو می‌کند.</li>
+    <li><strong>خروجی:</strong> <code>/export</code> یک فایل CSV از همه کاربران همراه با زبان، وضعیت اعلان، وضعیت
+      مسدودی و فیلترهایشان می‌فرستد.</li>
+    <li><strong>بازگردانی:</strong> همان فایل CSV (یا یک <code>users.json</code> قدیمی) را برای ربات بفرستید.
+      کاربران موجود به‌روز و جدیدها اضافه می‌شوند؛ هیچ‌کس حذف نمی‌شود.</li>
+    <li><strong>مسدودسازی:</strong> <code>/ban ID</code>، <code>/unban ID</code>، <code>/banned</code>. کاربر مسدود
+      کاملاً نادیده گرفته می‌شود و اعلان نمی‌گیرد.</li>
+    <li><strong>رفرش:</strong> <code>/refresh</code> کش را پاک و داده را دوباره دریافت می‌کند.</li>
+  </ul>
+</div></section>
+
+<section id="cache"><div class="wrap prose">
+  <h2>⚡ کش</h2>
+  <p>داده مأموریت‌ها فقط سر ریست بازی عوض می‌شود، پس کش به‌جای مدت ثابت، <em>تا ریست بعدی</em> معتبر است:</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>داده</th><th>اعتبار تا</th><th>بقا بعد از ری‌استارت</th></tr></thead>
+    <tbody>
+      <tr><td>مأموریت‌ها (وی‌باکس / ۱۶۰ / ونچر)</td><td>ریست ۰۰:۰۰ بعدی</td><td>بله</td></tr>
+      <tr><td>جایزه هفتگی</td><td>ریست پنجشنبه بعدی</td><td>بله</td></tr>
+      <tr><td>تاریخ پایان سیزن</td><td>روزانه</td><td>خیر</td></tr>
+    </tbody>
+  </table></div>
+  <p>تا ۲۰ دقیقه بعد از ریست، کش با فاصله کوتاه‌تری به‌روز می‌شود، چون ممکن است منبع هنوز داده جدید را منتشر
+  نکرده باشد. اگر دریافت شکست بخورد، به‌جای خطا داده قبلی نمایش داده می‌شود.</p>
+</div></section>
+
+<section id="security"><div class="wrap prose">
+  <h2>🔐 امنیت</h2>
+  <ul>
+    <li>ربات با کاربر سیستمی بدون دسترسی <code>fnbot</code> اجرا می‌شود، نه روت.</li>
+    <li>اطلاعات حساس در فایلی با دسترسی 0640 است، نه داخل سورس یا یونیت systemd.</li>
+    <li>رمز پروکسی از تمام خط‌های لاگ حذف می‌شود.</li>
+    <li>یونیت systemd سندباکس شده است: <code>ProtectSystem=strict</code>، <code>NoNewPrivileges</code>، مجموعه
+      capability خالی و فیلتر syscall.</li>
+    <li>وابستگی‌ها داخل virtualenv نصب می‌شوند و پایتون سیستم دست‌نخورده می‌ماند.</li>
+    <li>تمام متن‌های دریافتی قبل از ارسال به تلگرام HTML-escape می‌شوند.</li>
+  </ul>
+</div></section>
+
+<section id="changes"><div class="wrap prose">
+  <h2>🆕 تغییرات نسخه ۲</h2>
+  <p class="intro">اگر از نسخه اول می‌آیید، این‌ها فرق کرده است.</p>
+  <details open><summary>امنیت</summary><div><ul>
+    <li>توکن دیگر با <code>sed</code> داخل سورس پایتون تزریق نمی‌شود و از فایل محیطی خوانده می‌شود.</li>
+    <li>رمز پروکسی دیگر داخل یونیت systemd (که برای همه قابل خواندن بود) نوشته نمی‌شود و در ترمینال و لاگ هم چاپ نمی‌شود.</li>
+    <li>سرویس از <code>root</code> به یک کاربر اختصاصی با یونیت سندباکس‌شده منتقل شد.</li>
+    <li><code>pip --break-system-packages</code> با virtualenv جایگزین شد.</li>
+    <li>نام‌کاربری و رمز پروکسی URL-encode می‌شوند، پس کاراکترهای خاص دیگر اتصال را خراب نمی‌کنند.</li>
+  </ul></div></details>
+  <details><summary>رفع باگ</summary><div><ul>
+    <li>درخواست‌های HTTP تایم‌اوت نداشتند و می‌توانستند برای همیشه هنگ کنند — حالا محدود شده و با retry و backoff کار می‌کنند.</li>
+    <li>منبع مأموریت‌ها هم به‌صورت JSON خام و هم JSON تعبیه‌شده در صفحه پارس می‌شود، نه فقط حالت دوم.</li>
+    <li><code>PySocks</code> نصب نمی‌شد، پس پروکسی SOCKS برای اسکرپینگ هیچ‌وقت کار نمی‌کرد.</li>
+    <li>فرمت Markdown با وجود <code>*</code> یا <code>_</code> در نام مأموریت می‌شکست — به HTML امن تغییر کرد.</li>
+    <li>جاب هفتگی از شماره روزی استفاده می‌کرد که در نسخه‌های مختلف python-telegram-bot معنی متفاوتی دارد؛ حالا روز هفته داخل کد بررسی می‌شود.</li>
+    <li>درخواست‌های همگام داخل هندلرهای async کل event loop را قفل می‌کردند — به ترد جداگانه منتقل شدند.</li>
+    <li><code>users.json</code> غیراتمیک نوشته می‌شد و امکان خراب شدنش بود.</li>
+    <li>پیام همگانی محدودیت نرخ نداشت و می‌توانست به flood limit تلگرام بخورد.</li>
+    <li>محاسبه چرخه ونچر سر تحویل سال اشتباه بود.</li>
+    <li>پیام‌های بلندتر از ۴۰۹۶ کاراکتر بی‌صدا حذف می‌شدند — حالا تکه‌تکه می‌شوند.</li>
+    <li>با python-telegram-bot نسخه ۲۰، ۲۱ و ۲۲ کار می‌کند (API کلاس <code>Defaults</code> در نسخه ۲۲ عوض شد).</li>
+    <li>قطعی شبکه موقع استارت دیگر سرویس را وارد حلقه ری‌استارت نمی‌کند.</li>
+    <li>تایمر بتل‌پس وقتی دریافت آنلاین شکست بخورد، به تاریخ داخل تنظیمات برمی‌گردد.</li>
+  </ul></div></details>
+  <details><summary>قابلیت‌های جدید</summary><div><ul>
+    <li>مأموریت‌های ونچر ۱۴۰ با حذف دانجن‌ها.</li>
+    <li>فیلتر شخصی زون / جایزه / حداقل وی‌باکس برای هر کاربر.</li>
+    <li>دکمه روشن و خاموش کردن اعلان‌ها برای هر کاربر.</li>
+    <li>پنل مدیریت کامل: پیام همگانی با پیش‌نمایش، مسدودسازی، خروجی، بازگردانی و رفرش.</li>
+    <li>کش هماهنگ با ریست که روی دیسک هم ذخیره می‌شود.</li>
+    <li>دستور مدیریتی <code>fnbot</code>.</li>
+    <li>تست خودکار اتصال هنگام نصب.</li>
+  </ul></div></details>
+</div></section>
+
+<section id="upgrade"><div class="wrap prose">
+  <h2>⬆️ ارتقا از نسخه ۱</h2>
+  <p>فقط نصب‌کننده را اجرا کنید. سرویس قدیمی <code>vbucksbot.service</code> را غیرفعال می‌کند، فایل
+  <code>/root/fortnite_bot/users.json</code> را به مسیر جدید منتقل می‌کند و تنظیمات زمان‌بندی قدیمی را به‌روز
+  می‌کند. هیچ چیزی حذف نمی‌شود — پوشه قدیمی سر جایش می‌ماند تا خودتان پاکش کنید.</p>
+</div></section>
+
+<section id="troubleshooting"><div class="wrap prose">
+  <h2>🩺 عیب‌یابی</h2>
+  <p>اول این دو را بزنید:</p>
+  <div class="code"><pre><code>fnbot errors
+fnbot test</code></pre><button class="copy" type="button" data-done="کپی شد">کپی</button></div>
+  <details><summary><code>httpx.ConnectError: All connection attempts failed</code></summary><div>
+    <p>سرور به تلگرام نمی‌رسد. اگر پروکسی تنظیم کرده‌اید، چیزی روی آن آدرس گوش نمی‌دهد — با
+    <code>ss -ltnp | grep PORT</code> بررسی کنید. اغلب راه‌حل، حذف کامل پروکسی است.</p></div></details>
+  <details><summary><code>401 Unauthorized</code></summary><div>
+    <p>توکن اشتباه یا باطل شده است. از BotFather یکی جدید بگیرید.</p></div></details>
+  <details><summary>لیست مأموریت‌ها خالی است</summary><div>
+    <p>سایت منبع فرمتش را عوض کرده، یا در بازه ۲۰ دقیقه‌ای بعد از ریست هستید. <code>/refresh</code> را امتحان کنید.</p></div></details>
+  <details><summary>لیست ونچر خالی است</summary><div>
+    <p>نام زون با الگوی ونچر مطابقت نکرده است. <code>fnbot logs</code> را ببینید.</p></div></details>
+</div></section>
+
+<section id="paths"><div class="wrap prose">
+  <h2>📁 مسیرها</h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th>مسیر</th><th>محتوا</th></tr></thead>
+    <tbody>
+      <tr><td><code>/opt/fortnite_bot/</code></td><td>کد برنامه و virtualenv</td></tr>
+      <tr><td><code>/etc/fortnite_bot/bot.env</code></td><td>توکن، آیدی ادمین، پروکسی و تنظیمات</td></tr>
+      <tr><td><code>/var/lib/fortnite_bot/</code></td><td><code>users.json</code> و فایل‌های کش</td></tr>
+      <tr><td><code>/etc/systemd/system/fortnite-bot.service</code></td><td>یونیت سرویس</td></tr>
+    </tbody>
+  </table></div>
+  <h3>📝 نکات</h3>
+  <ul>
+    <li>ظرفیت پیش‌فرض ۲۰۰ کاربر است؛ <code>MAX_USERS</code> را در تنظیمات تغییر دهید.</li>
+    <li>داده مأموریت‌ها از سایت‌های جامعه فورتنایت می‌آید. اگر یکی‌شان ساختارش را عوض کند، ربات آخرین داده موجود را نشان می‌دهد و در لاگ هشدار می‌گذارد.</li>
+    <li><code>SEASON_START_UTC</code> و <code>SEASON_END_UTC</code> را هر سیزن یک‌بار به‌روز کنید تا نوار پیشرفت بتل‌پس دقیق بماند.</li>
+  </ul>
+</div></section>
+
+</main>
+<footer><div class="wrap"><a href="https://Plus98ir.github.io"><img src="https://img.shields.io/badge/Website-Plus98ir.github.io-blue?style=for-the-badge&amp;logo=google-chrome" alt="Plus98ir.github.io" width="260" height="28"></a></div></footer>
+<script>
+(function () {
+  var lang = document.documentElement.lang;
+  var nf = new Intl.NumberFormat(lang === "fa" ? "fa-IR" : "en-US",
+                                 { minimumIntegerDigits: 2, useGrouping: false });
+  var clock = document.getElementById("reset-clock");
+  var bar = document.getElementById("reset-bar");
+
+  function tick() {
+    var now = new Date();
+    var next = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1);
+    var s = Math.max(0, Math.floor((next - now.getTime()) / 1000));
+    var h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+    clock.textContent = [h, m, sec].map(function (n) { return nf.format(n); }).join(":");
+    bar.style.setProperty("--p", ((86400 - s) / 86400).toFixed(4));
+  }
+  if (clock && bar) { tick(); setInterval(tick, 1000); }
+
+  document.querySelectorAll(".code").forEach(function (block) {
+    var btn = block.querySelector(".copy");
+    var code = block.querySelector("code");
+    var label = btn.textContent;
+    btn.addEventListener("click", function () {
+      var text = code.innerText;
+      var done = function () {
+        btn.textContent = btn.dataset.done;
+        btn.classList.add("done");
+        setTimeout(function () { btn.textContent = label; btn.classList.remove("done"); }, 1600);
+      };
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(done, fallback);
+      } else { fallback(); }
+      function fallback() {
+        var range = document.createRange();
+        range.selectNodeContents(code);
+        var sel = window.getSelection();
+        sel.removeAllRanges(); sel.addRange(range);
+        try { document.execCommand("copy"); done(); } catch (e) {}
+        sel.removeAllRanges();
+      }
+    });
+  });
+})();
+</script>
 </body>
 </html>
