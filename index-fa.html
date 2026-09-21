@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🤖 ربات تلگرام هشدار مأموریت‌های وی‌باکس و 160PL</title>
+    <title>🤖 ربات تلگرام مأموریت‌های فورتنایت (Save the World)</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5.2.0/github-markdown-dark.css">
     <style>
         body {
@@ -19,7 +19,6 @@
             direction: rtl !important;
             text-align: right !important;
         }
-        /* اعمال زور برای راست‌چین کردن تمام عناصر گیت‌هاب */
         .markdown-body p, .markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4, .markdown-body ul, .markdown-body ol, .markdown-body li, .markdown-body blockquote {
             text-align: right !important;
             direction: rtl !important;
@@ -36,7 +35,6 @@
             margin-right: 0 !important;
             color: #8b949e;
         }
-        /* استایل دکمه‌های زبان شبیه عکس */
         .lang-switcher table {
             width: auto;
             margin-bottom: 20px;
@@ -46,26 +44,38 @@
             padding: 6px 13px;
             border: 1px solid #30363d;
         }
+        .markdown-body table {
+            display: table;
+            width: 100%;
+            direction: rtl;
+        }
+        .markdown-body th, .markdown-body td { text-align: right !important; }
+        /* کد و دستورها همیشه چپ‌چین می‌مانند */
+        .markdown-body pre, .markdown-body code {
+            direction: ltr !important;
+            text-align: left !important;
+        }
+        .badge-row { text-align: center; margin-bottom: 24px; }
     </style>
 </head>
 
- <p align="center">
-  <a href="https://Plus98ir.github.io">
-    <img src="https://img.shields.io/badge/Website-Plus98ir.github.io-blue?style=for-the-badge&logo=google-chrome" alt="Web Page">
-  </a>
-</p>
-    
 <body>
     <div class="markdown-body">
-        <h1>🤖 ربات تلگرام هشدار مأموریت‌های وی‌باکس و 160PL</h1>
-        
-        <!-- کادر زبان‌ها -->
+
+        <div class="badge-row">
+            <a href="https://Plus98ir.github.io">
+                <img src="https://img.shields.io/badge/Website-Plus98ir.github.io-blue?style=for-the-badge&logo=google-chrome" alt="Web Page">
+            </a>
+        </div>
+
+        <h1>🤖 ربات تلگرام مأموریت‌های فورتنایت (Save the World)</h1>
+
         <div class="lang-switcher">
             <table>
                 <tbody>
                     <tr>
-                        <td><a href="index.html">us English</a></td>
-                        <td><strong>IR فارسی</strong></td>
+                        <td><a href="index.html">🇺🇸 English</a></td>
+                        <td><strong>🇮🇷 فارسی</strong></td>
                     </tr>
                 </tbody>
             </table>
@@ -73,77 +83,251 @@
 
         <hr>
 
-        <h2>🇮🇷 راهنمای فارسی</h2>
+        <p>یک ربات تلگرام دوزبانه (فارسی / انگلیسی) که مأموریت‌های فورتنایت
+        <em>Save the World</em> را دنبال می‌کند: مأموریت‌های وی‌باکس، پاور ۱۶۰،
+        ونچر ۱۴۰، جایزه هفتگی و تایمر سیزن‌ها. با یک دستور به‌صورت یک سرویس
+        امن روی سرور نصب می‌شود.</p>
 
-        <h3>📋 امکانات</h3>
+        <h2>📋 امکانات</h2>
         <ul>
-            <li><strong>هشدارهای لحظه‌ای وی‌باکس (V-Bucks):</strong> به‌طور خودکار تشخیص داده و زمانی که ماموریت‌های روزانه دارای وی‌باکس هستند اطلاع می‌دهد.</li>
-            <li><strong>هشدارهای سوپرچارجر:</strong> پیگیری فوری و دریافت اعلان زمانی که ماموریت‌های هفتگی یا ریست‌ها، سوپرچارجرهای Hero، Survivor، Weapon، یا Trap را ارائه می‌دهند.</li>
-            <li><strong>جوایز هفتگی:</strong> هرگز آیتم‌های کمیاب پیشرفت هفتگی و آپگریدهای سطح بالا را از دست ندهید.</li>
-            <li><strong>ردیاب ماموریت‌های PL 160:</strong> بررسی آسان ماموریت‌های سطح بالای PL 160، مادیفایرهای منطقه (zone modifiers) و جوایز سوپرچارجر.</li>
-            <li><strong>اسکریپت نصب تعاملی:</strong> نصب سریع و خودکار تنها با یک دستور ترمینال، همراه با درخواست توکن ربات (Bot Token) شما.</li>
-            <li><strong>ارسال اعلان:</strong> ۱ دقیقه پس از به‌روزرسانی فروشگاه.</li>
-            <li><strong>سریع و سبک:</strong> ساخته شده برای حداقل مصرف منابع و زمان پاسخگویی فوری.</li>
+            <li><strong>هشدار وی‌باکس:</strong> همه مأموریت‌های روزانه‌ای که جایزه آلرتشان وی‌باکس دارد، همراه با مقدارش.</li>
+            <li><strong>مأموریت‌های پاور ۱۶۰:</strong> مأموریت‌های اندگیم با لیست کامل جوایز آلرت و پایه.</li>
+            <li><strong>مأموریت‌های ونچر ۱۴۰:</strong> فقط مأموریت‌های ونچر با پاور ۱۴۰. دانجن‌ها حذف می‌شوند.</li>
+            <li><strong>جایزه هفتگی:</strong> مشخص می‌کند این هفته کدام سوپرچارجر (Hero / Survivor / Weapon / Trap / Defender) یا Core RE-PERK ارائه شده است.</li>
+            <li><strong>تایمر سیزن‌ها:</strong> شمارش معکوس زنده بتل‌پس و ونچر همراه با نوار پیشرفت.</li>
+            <li><strong>فیلتر شخصی هر کاربر:</strong> هر کاربر زون‌های دلخواهش (Stonewood تا Twine Peaks)، نوع جوایز مورد علاقه و حداقل مقدار وی‌باکس را انتخاب می‌کند. این فیلترها روی اعلان روزانه هم اعمال می‌شوند.</li>
+            <li><strong>اعلان خودکار:</strong> خلاصه روزانه ۱ دقیقه بعد از ریست ۰۰:۰۰ UTC و جایزه هفتگی ۲ دقیقه بعد از ریست پنجشنبه. هر کاربر می‌تواند خاموشش کند.</li>
+            <li><strong>دوزبانه:</strong> فارسی و انگلیسی، قابل تعویض برای هر کاربر در هر لحظه.</li>
+            <li><strong>پنل مدیریت:</strong> آمار، پیام همگانی با پیش‌نمایش، مسدودسازی، خروجی و بازگردانی CSV.</li>
+            <li><strong>نصب تک‌دستوری:</strong> توکن، آیدی ادمین و پروکسی اختیاری را می‌پرسد و همه‌چیز را آماده می‌کند.</li>
         </ul>
 
-        <h3>⚙️ مرحله ۱: دریافت توکن ربات تلگرام</h3>
-        <p>قبل از نصب ربات، باید از طریق BotFather یک ربات تلگرام ایجاد کنید:</p>
+        <h2>⚙️ مرحله ۱: دریافت توکن ربات</h2>
         <ol>
-            <li>تلگرام را باز کرده و <code>BotFather@</code> را جستجو کنید.</li>
-            <li>یک چت باز کنید و دستور <code>newbot/</code> را ارسال کنید.</li>
-            <li>مراحل را دنبال کنید تا یک نام نمایشی (display name) برای ربات خود انتخاب کنید.</li>
-            <li>یک نام کاربری (username) منحصربه‌فرد انتخاب کنید که به <code>bot</code> یا <code>bot_</code> ختم شود (مثلاً <code>FortniteAlertsBot</code>).</li>
-            <li>توکن HTTP API ارائه شده توسط BotFather را کپی کنید.</li>
+            <li>تلگرام را باز کنید و <code>@BotFather</code> را جستجو کنید.</li>
+            <li>دستور <code>/newbot</code> را بفرستید.</li>
+            <li>یک نام نمایشی و سپس یک نام کاربری یکتا که به <code>bot</code> ختم شود انتخاب کنید (مثلاً <code>FortniteAlertsBot</code>).</li>
+            <li>توکن HTTP API را کپی کنید.</li>
+            <li>آیدی عددی خودتان را از <code>@userinfobot</code> بگیرید؛ همان آیدی ادمین است.</li>
         </ol>
 
         <blockquote>
-            <p><strong>⚠️ هشدار:</strong> توکن ربات خود را ایمن نگه دارید! آن را به صورت عمومی به اشتراک نگذارید یا در گیت‌هاب قرار ندهید.</p>
+            <p><strong>⚠️ هشدار:</strong> توکن ربات را جایی منتشر نکنید و در گیت‌هاب قرار ندهید.
+            نصب‌کننده آن را در فایلی ذخیره می‌کند که فقط روت می‌تواند بخواند، نه داخل سورس کد.</p>
         </blockquote>
 
-        <h3>🚀 مرحله ۲: نصب و پیکربندی</h3>
-        <p>شما می‌توانید ربات را به راحتی با استفاده از اسکریپت نصب خودکار نصب و پیکربندی کنید:</p>
-        <pre><code class="language-bash">bash &lt;(curl -fsSL https://github.com/Plus98ir/Fortnite_Missions/releases/latest/download/install.sh)</code></pre>
+        <h2>🚀 مرحله ۲: نصب</h2>
+        <p>روی یک سرور دبیان یا اوبونتو، با کاربر روت:</p>
+        <pre><code class="language-bash">bash &lt;(curl -fsSL https://github.com/Plus98ir/Fortnite_Missions/releases/latest/download/install_fortnite_bot.sh)</code></pre>
 
-        <h3>توجه: پیکربندی برای سرورهای ایران</h3>
-        <p>اگر ربات را روی سرور ایران نصب می‌کنید، باید یک پروکسی تنظیم کنید. لطفاً مراحل زیر را دنبال کنید:</p>
+        <blockquote>
+            <p>حتماً از <code>bash &lt;(curl ...)</code> استفاده کنید، نه <code>curl ... | bash</code>.
+            نصب‌کننده سؤال می‌پرسد و حالت دوم جواب‌های شما را می‌بلعد.</p>
+        </blockquote>
 
-        <h4>۱. تنظیم آدرس پروکسی</h4>
-        <p>فایل ربات را باز کنید:</p>
-        <pre><code class="language-bash">nano /root/fortnite_bot/vbucks_bot.py</code></pre>
-        <p>متغیر <code>PROXY_URL</code> را پیدا کنید و خط را از حالت کامنت خارج کنید:</p>
-        <pre><code class="language-python">PROXY_URL = "socks5://username:password@127.0.0.1:port"</code></pre>
+        <p>اگر ترجیح می‌دهید اول اسکریپت را بخوانید:</p>
+        <pre><code class="language-bash">curl -fsSLO https://github.com/Plus98ir/Fortnite_Missions/releases/latest/download/install_fortnite_bot.sh
+sudo bash install_fortnite_bot.sh</code></pre>
 
-        <h4>۲. فعال‌سازی پروکسی در برنامه</h4>
-        <p>به بخش <code>if __name__ == '__main__':</code> بروید و سه خط را از حالت کامنت خارج کنید:</p>
-        <pre><code class="language-python"># فعال‌سازی تنظیمات پروکسی در صورت نیاز:
-    t_request = HTTPXRequest(proxy=PROXY_URL) # <--- برای خارج کردن از کامنت، علامت # را بردارید
-    
-    defaults = Defaults(tzinfo=timezone.utc)
-    
-    application = (
-        ApplicationBuilder()
-        .token(TOKEN)
-        .request(t_request)               # <--- برای خارج کردن از کامنت، علامت # را بردارید
-        .get_updates_request(t_request)   # <--- برای خارج کردن از کامنت، علامت # را بردارید
-        .defaults(defaults)
-        .build()
-    )</code></pre>
-
-        <h4>۳. ری‌استارت کردن سرویس</h4>
-        <pre><code class="language-bash">systemctl restart vbucksbot.service</code></pre>
-
-        <h3>همچنین:</h3>
+        <p>نصب‌کننده این‌ها را می‌پرسد:</p>
         <ul>
-            <li>اگر سرور ندارید، می‌توانید از ربات من استفاده کنید فقط نمیدانم ربات تا چه زمانی فعال خواهد بود : <code>plus98vbucks_bot@</code></li>
-            <li>ظرفیت پیش‌فرض برای اعلان‌های ماموریت روی ۲۰۰ کاربر تنظیم شده است.</li>
-            <li>برای تغییر این محدودیت، در صورت نصب روی سرور شخصی فایل vbucks_bot.py را ویرایش کنید و متغیر <code>MAX_USERS = 200</code> را تغییر دهید.</li>
+            <li>توکن ربات (قبل از استفاده اعتبارسنجی می‌شود و روی صفحه نمایش داده نمی‌شود)؛</li>
+            <li>آیدی عددی ادمین؛</li>
+            <li>اینکه پروکسی لازم دارید یا نه — و اگر بله، نوع، آدرس، پورت و نام‌کاربری/رمز.</li>
         </ul>
+
+        <p>قبل از استارت سرویس، اتصال را هم مستقیم و هم از طریق پروکسی تست می‌کند و
+        می‌گوید کدام‌یک کار می‌کند. اجرای دوباره نصب‌کننده، کد را به‌روز می‌کند و
+        تنظیمات فعلی را نگه می‌دارد.</p>
+
+        <h2>🌐 تنظیم پروکسی</h2>
+        <p>دیگر لازم نیست هیچ فایل پایتونی را ویرایش کنید. پروکسی یکی از سؤال‌های نصب است
+        و هر وقت خواستید با <code>fnbot config</code> قابل تغییر است.</p>
+
+        <blockquote>
+            <p><strong>توجه:</strong> پروکسی فقط وقتی لازم است که خود <em>سرور</em> نتواند به
+            <code>api.telegram.org</code> برسد — معمولاً سرور ایران. سرور خارج از کشور اصلاً
+            به پروکسی نیاز ندارد. اگر <code>127.0.0.1</code> وارد می‌کنید، یادتان باشد یعنی
+            لوکال‌هاست <em>خودِ سرور</em>، نه کامپیوتر شما.</p>
+        </blockquote>
+
+        <p>پروکسی‌های SOCKS5 برای اسکرپینگ به‌صورت خودکار به <code>socks5h</code> ارتقا داده
+        می‌شوند تا DNS از داخل پروکسی حل شود و نشتی به ریزالور محلی نداشته باشد.</p>
+
+        <h2>🎛 مدیریت</h2>
+        <p>نصب‌کننده دستور <code>fnbot</code> را اضافه می‌کند:</p>
+        <table>
+            <thead><tr><th>دستور</th><th>کاری که می‌کند</th></tr></thead>
+            <tbody>
+                <tr><td><code>fnbot status</code></td><td>وضعیت سرویس</td></tr>
+                <tr><td><code>fnbot logs</code></td><td>نمایش زنده لاگ</td></tr>
+                <tr><td><code>fnbot errors</code></td><td>فقط خط‌های خطا</td></tr>
+                <tr><td><code>fnbot test</code></td><td>تست اتصال به تلگرام، مستقیم و با پروکسی</td></tr>
+                <tr><td><code>fnbot config</code></td><td>ویرایش تنظیمات و ری‌استارت خودکار</td></tr>
+                <tr><td><code>fnbot restart</code></td><td>ری‌استارت سرویس</td></tr>
+                <tr><td><code>fnbot uninstall</code></td><td>حذف سرویس (تنظیمات و کاربران حفظ می‌شوند)</td></tr>
+            </tbody>
+        </table>
+
+        <h2>🔧 فایل تنظیمات</h2>
+        <p>همه‌چیز در <code>/etc/fortnite_bot/bot.env</code> است (دسترسی 0640، مالک root:fnbot):</p>
+        <table>
+            <thead><tr><th>تنظیم</th><th>پیش‌فرض</th><th>توضیح</th></tr></thead>
+            <tbody>
+                <tr><td><code>MAX_USERS</code></td><td>200</td><td>سقف تعداد کاربران</td></tr>
+                <tr><td><code>DAILY_RESET_UTC</code></td><td>00:01</td><td>زمان اعلان روزانه</td></tr>
+                <tr><td><code>WEEKLY_RESET_UTC</code></td><td>00:02</td><td>زمان اعلان هفتگی</td></tr>
+                <tr><td><code>WEEKLY_RESET_WEEKDAY</code></td><td>3</td><td>۰ = دوشنبه، ۳ = پنجشنبه</td></tr>
+                <tr><td><code>SEASON_START_UTC</code></td><td>—</td><td>شروع سیزن، برای نوار پیشرفت</td></tr>
+                <tr><td><code>SEASON_END_UTC</code></td><td>—</td><td>جایگزین در صورت شکست دریافت آنلاین</td></tr>
+                <tr><td><code>DEFAULT_LANG</code></td><td>en</td><td><code>en</code> یا <code>fa</code></td></tr>
+                <tr><td><code>LOG_LEVEL</code></td><td>INFO</td><td>برای عیب‌یابی روی <code>DEBUG</code> بگذارید</td></tr>
+            </tbody>
+        </table>
+
+        <p>بعد از ویرایش، <code>fnbot restart</code> بزنید — یا از همان <code>fnbot config</code>
+        استفاده کنید که خودش ری‌استارت می‌کند.</p>
+
+        <h2>👑 پنل مدیریت</h2>
+        <p>فقط آیدی ادمینی که در تنظیمات ثبت شده، دکمه <code>👑 Admin</code> را می‌بیند.</p>
+        <ul>
+            <li><strong>آمار:</strong> تعداد کل کاربران، مشترکان اعلان، مسدودها و کاربران دارای فیلتر.</li>
+            <li><strong>پیام همگانی:</strong> دکمه را بزنید و بعد متن را بفرستید، یا
+                <code>/broadcast متن پیام</code> را استفاده کنید. در هر دو حالت قبل از ارسال
+                پیش‌نمایش با دکمه تأیید/لغو می‌گیرید. <code>/cancel</code> هم لغو می‌کند.</li>
+            <li><strong>خروجی:</strong> <code>/export</code> یک فایل CSV از همه کاربران همراه با
+                زبان، وضعیت اعلان، وضعیت مسدودی و فیلترهایشان می‌فرستد.</li>
+            <li><strong>بازگردانی:</strong> همان فایل CSV (یا یک <code>users.json</code> قدیمی) را
+                برای ربات بفرستید. کاربران موجود به‌روز و جدیدها اضافه می‌شوند؛ هیچ‌کس حذف نمی‌شود.</li>
+            <li><strong>مسدودسازی:</strong> <code>/ban ID</code>، <code>/unban ID</code>،
+                <code>/banned</code>. کاربر مسدود کاملاً نادیده گرفته می‌شود و اعلان نمی‌گیرد.</li>
+            <li><strong>رفرش:</strong> <code>/refresh</code> کش را پاک و داده را دوباره دریافت می‌کند.</li>
+        </ul>
+
+        <h2>⚡ کش</h2>
+        <p>داده مأموریت‌ها فقط سر ریست بازی عوض می‌شود، پس کش به‌جای مدت ثابت،
+        <em>تا ریست بعدی</em> معتبر است:</p>
+        <table>
+            <thead><tr><th>داده</th><th>اعتبار تا</th><th>بقا بعد از ری‌استارت</th></tr></thead>
+            <tbody>
+                <tr><td>مأموریت‌ها (وی‌باکس / ۱۶۰ / ونچر)</td><td>ریست ۰۰:۰۰ بعدی</td><td>بله</td></tr>
+                <tr><td>جایزه هفتگی</td><td>ریست پنجشنبه بعدی</td><td>بله</td></tr>
+                <tr><td>تاریخ پایان سیزن</td><td>روزانه</td><td>خیر</td></tr>
+            </tbody>
+        </table>
+        <p>تا ۲۰ دقیقه بعد از ریست، کش با فاصله کوتاه‌تری به‌روز می‌شود، چون ممکن است
+        منبع هنوز داده جدید را منتشر نکرده باشد. اگر دریافت شکست بخورد، به‌جای خطا
+        داده قبلی نمایش داده می‌شود.</p>
+
+        <h2>🔐 امنیت</h2>
+        <ul>
+            <li>ربات با کاربر سیستمی بدون دسترسی <code>fnbot</code> اجرا می‌شود، نه روت.</li>
+            <li>اطلاعات حساس در فایلی با دسترسی 0640 است، نه داخل سورس یا یونیت systemd.</li>
+            <li>رمز پروکسی از تمام خط‌های لاگ حذف می‌شود.</li>
+            <li>یونیت systemd سندباکس شده است: <code>ProtectSystem=strict</code>،
+                <code>NoNewPrivileges</code>، مجموعه capability خالی و فیلتر syscall.</li>
+            <li>وابستگی‌ها داخل virtualenv نصب می‌شوند و پایتون سیستم دست‌نخورده می‌ماند.</li>
+            <li>تمام متن‌های دریافتی قبل از ارسال به تلگرام HTML-escape می‌شوند.</li>
+        </ul>
+
+        <h2>🆕 تغییرات نسخه ۲</h2>
+        <p>اگر از نسخه اول می‌آیید، این‌ها فرق کرده است.</p>
+
+        <h3>امنیت</h3>
+        <ul>
+            <li>توکن دیگر با <code>sed</code> داخل سورس پایتون تزریق نمی‌شود و از فایل محیطی خوانده می‌شود.</li>
+            <li>رمز پروکسی دیگر داخل یونیت systemd (که برای همه قابل خواندن بود) نوشته نمی‌شود و در ترمینال و لاگ هم چاپ نمی‌شود.</li>
+            <li>سرویس از <code>root</code> به یک کاربر اختصاصی با یونیت سندباکس‌شده منتقل شد.</li>
+            <li><code>pip --break-system-packages</code> با virtualenv جایگزین شد.</li>
+            <li>نام‌کاربری و رمز پروکسی URL-encode می‌شوند، پس کاراکترهای خاص دیگر اتصال را خراب نمی‌کنند.</li>
+        </ul>
+
+        <h3>رفع باگ</h3>
+        <ul>
+            <li>درخواست‌های HTTP تایم‌اوت نداشتند و می‌توانستند برای همیشه هنگ کنند — حالا محدود شده و با retry و backoff کار می‌کنند.</li>
+            <li>منبع مأموریت‌ها هم به‌صورت JSON خام و هم JSON تعبیه‌شده در صفحه پارس می‌شود، نه فقط حالت دوم.</li>
+            <li><code>PySocks</code> نصب نمی‌شد، پس پروکسی SOCKS برای اسکرپینگ هیچ‌وقت کار نمی‌کرد.</li>
+            <li>فرمت Markdown با وجود <code>*</code> یا <code>_</code> در نام مأموریت می‌شکست — به HTML امن تغییر کرد.</li>
+            <li>جاب هفتگی از شماره روزی استفاده می‌کرد که در نسخه‌های مختلف
+                python-telegram-bot معنی متفاوتی دارد؛ حالا روز هفته داخل کد بررسی می‌شود.</li>
+            <li>درخواست‌های همگام داخل هندلرهای async کل event loop را قفل می‌کردند — به ترد جداگانه منتقل شدند.</li>
+            <li><code>users.json</code> غیراتمیک نوشته می‌شد و امکان خراب شدنش بود.</li>
+            <li>پیام همگانی محدودیت نرخ نداشت و می‌توانست به flood limit تلگرام بخورد.</li>
+            <li>محاسبه چرخه ونچر سر تحویل سال اشتباه بود.</li>
+            <li>پیام‌های بلندتر از ۴۰۹۶ کاراکتر بی‌صدا حذف می‌شدند — حالا تکه‌تکه می‌شوند.</li>
+            <li>با python-telegram-bot نسخه ۲۰، ۲۱ و ۲۲ کار می‌کند (API کلاس <code>Defaults</code> در نسخه ۲۲ عوض شد).</li>
+            <li>قطعی شبکه موقع استارت دیگر سرویس را وارد حلقه ری‌استارت نمی‌کند.</li>
+            <li>تایمر بتل‌پس وقتی دریافت آنلاین شکست بخورد، به تاریخ داخل تنظیمات برمی‌گردد.</li>
+        </ul>
+
+        <h3>قابلیت‌های جدید</h3>
+        <ul>
+            <li>مأموریت‌های ونچر ۱۴۰ با حذف دانجن‌ها.</li>
+            <li>فیلتر شخصی زون / جایزه / حداقل وی‌باکس برای هر کاربر.</li>
+            <li>دکمه روشن و خاموش کردن اعلان‌ها برای هر کاربر.</li>
+            <li>پنل مدیریت کامل: پیام همگانی با پیش‌نمایش، مسدودسازی، خروجی، بازگردانی و رفرش.</li>
+            <li>کش هماهنگ با ریست که روی دیسک هم ذخیره می‌شود.</li>
+            <li>دستور مدیریتی <code>fnbot</code>.</li>
+            <li>تست خودکار اتصال هنگام نصب.</li>
+        </ul>
+
+        <h2>⬆️ ارتقا از نسخه ۱</h2>
+        <p>فقط نصب‌کننده را اجرا کنید. سرویس قدیمی <code>vbucksbot.service</code> را غیرفعال
+        می‌کند، فایل <code>/root/fortnite_bot/users.json</code> را به مسیر جدید منتقل می‌کند و
+        تنظیمات زمان‌بندی قدیمی را به‌روز می‌کند. هیچ چیزی حذف نمی‌شود — پوشه قدیمی سر
+        جایش می‌ماند تا خودتان پاکش کنید.</p>
+
+        <h2>🩺 عیب‌یابی</h2>
+        <p>اول این دو را بزنید:</p>
+        <pre><code class="language-bash">fnbot errors
+fnbot test</code></pre>
+
+        <table>
+            <thead><tr><th>نشانه</th><th>علت</th></tr></thead>
+            <tbody>
+                <tr>
+                    <td><code>httpx.ConnectError: All connection attempts failed</code></td>
+                    <td>سرور به تلگرام نمی‌رسد. اگر پروکسی تنظیم کرده‌اید، چیزی روی آن آدرس گوش نمی‌دهد — با <code>ss -ltnp | grep PORT</code> بررسی کنید. اغلب راه‌حل، حذف کامل پروکسی است.</td>
+                </tr>
+                <tr>
+                    <td><code>401 Unauthorized</code></td>
+                    <td>توکن اشتباه یا باطل شده است. از BotFather یکی جدید بگیرید.</td>
+                </tr>
+                <tr>
+                    <td>لیست مأموریت‌ها خالی است</td>
+                    <td>سایت منبع فرمتش را عوض کرده، یا در بازه ۲۰ دقیقه‌ای بعد از ریست هستید. <code>/refresh</code> را امتحان کنید.</td>
+                </tr>
+                <tr>
+                    <td>لیست ونچر خالی است</td>
+                    <td>نام زون با الگوی ونچر مطابقت نکرده است. <code>fnbot logs</code> را ببینید.</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>📁 مسیرها</h2>
+        <table>
+            <thead><tr><th>مسیر</th><th>محتوا</th></tr></thead>
+            <tbody>
+                <tr><td><code>/opt/fortnite_bot/</code></td><td>کد برنامه و virtualenv</td></tr>
+                <tr><td><code>/etc/fortnite_bot/bot.env</code></td><td>توکن، آیدی ادمین، پروکسی و تنظیمات</td></tr>
+                <tr><td><code>/var/lib/fortnite_bot/</code></td><td><code>users.json</code> و فایل‌های کش</td></tr>
+                <tr><td><code>/etc/systemd/system/fortnite-bot.service</code></td><td>یونیت سرویس</td></tr>
+            </tbody>
+        </table>
+
+        <h2>📝 نکات</h2>
+        <ul>
+            <li>ظرفیت پیش‌فرض ۲۰۰ کاربر است؛ <code>MAX_USERS</code> را در تنظیمات تغییر دهید.</li>
+            <li>داده مأموریت‌ها از سایت‌های جامعه فورتنایت می‌آید. اگر یکی‌شان ساختارش را عوض کند، ربات آخرین داده موجود را نشان می‌دهد و در لاگ هشدار می‌گذارد.</li>
+            <li><code>SEASON_START_UTC</code> و <code>SEASON_END_UTC</code> را هر سیزن یک‌بار به‌روز کنید تا نوار پیشرفت بتل‌پس دقیق بماند.</li>
+        </ul>
+
+        <hr>
+        <div class="badge-row">
+            <a href="https://Plus98ir.github.io">
+                <img src="https://img.shields.io/badge/Website-Plus98ir.github.io-blue?style=for-the-badge&logo=google-chrome" alt="Web Page">
+            </a>
+        </div>
     </div>
 </body>
 </html>
-
- <p align="center">
-  <a href="https://Plus98ir.github.io">
-    <img src="https://img.shields.io/badge/Website-Plus98ir.github.io-blue?style=for-the-badge&logo=google-chrome" alt="Web Page">
-  </a>
-</p>
