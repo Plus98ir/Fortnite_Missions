@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html dir="ltr" lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🤖 Fortnite STW Alert Weekly Reward & 160PL Mission Tracker</title>
+    <title>🤖 Fortnite STW Missions Telegram Bot</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5.2.0/github-markdown-dark.css">
     <style>
         body {
@@ -17,7 +17,6 @@
             max-width: 900px;
             margin: 0 auto;
         }
-        /* استایل دکمه‌های زبان شبیه عکس */
         .lang-switcher table {
             width: auto;
             margin-bottom: 20px;
@@ -27,104 +26,287 @@
             padding: 6px 13px;
             border: 1px solid #30363d;
         }
+        .markdown-body table {
+            display: table;
+            width: 100%;
+        }
+        .badge-row {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        code, pre { direction: ltr; text-align: left; }
     </style>
 </head>
 
-     <p align="center">
-  <a href="https://Plus98ir.github.io">
-    <img src="https://img.shields.io/badge/Website-Plus98ir.github.io-blue?style=for-the-badge&logo=google-chrome" alt="Web Page">
-  </a>
-</p>
-    
 <body>
     <div class="markdown-body">
-        <h1>🤖 Fortnite STW Alert Weekly Reward & 160PL Mission Tracker</h1>
-        
-        <!-- کادر زبان‌ها -->
+
+        <div class="badge-row">
+            <a href="https://Plus98ir.github.io">
+                <img src="https://img.shields.io/badge/Website-Plus98ir.github.io-blue?style=for-the-badge&logo=google-chrome" alt="Web Page">
+            </a>
+        </div>
+
+        <h1>🤖 Fortnite STW Missions Telegram Bot</h1>
+
         <div class="lang-switcher">
             <table>
                 <tbody>
                     <tr>
-                        <td><strong>us English</strong></td>
-                        <td><a href="index-fa.html">IR فارسی</a></td>
+                        <td><strong>🇺🇸 English</strong></td>
+                        <td><a href="fa.html">🇮🇷 فارسی</a></td>
                     </tr>
                 </tbody>
             </table>
-        </div>        
+        </div>
+
         <hr>
 
-        <h2>🇺🇸 English Documentation</h2>
+        <p>A bilingual (English / Persian) Telegram bot that tracks Fortnite
+        <em>Save the World</em> mission alerts: V-Bucks missions, Power 160 missions,
+        Ventures 140 missions, the weekly Supercharger reward, and season countdowns.
+        One command installs it as a hardened systemd service.</p>
 
-        <h3>📋 Features</h3>
+        <h2>📋 Features</h2>
         <ul>
-            <li><strong>Real-Time V-Bucks Alerts:</strong> Automatically detects and notifies when daily missions offer V-Bucks.</li>
-            <li><strong>Supercharger Alerts:</strong> Instantly track and get notified when weekly missions or alert resets offer Hero, Survivor, Weapon, or Trap Superchargers.</li>
-            <li><strong>Weekly Rewards:</strong> Never miss out on rare weekly progression items and top-tier upgrades.</li>
-            <li><strong>160 PL Mission Tracker:</strong> Easily check high-tier PL 160 missions, zone modifiers, and supercharger rewards.</li>
-            <li><strong>Interactive Setup Script:</strong> Quick automated installation via a single terminal command, prompting for your Bot Token.</li>
-            <li><strong>Send Notification:</strong> 1 Min after shop updated.</li>
-            <li><strong>Fast & Lightweight:</strong> Built for minimal resource consumption and instant response times.</li>
+            <li><strong>V-Bucks alerts</strong> — every daily mission whose alert rewards contain V-Bucks, with the amount.</li>
+            <li><strong>Power 160 missions</strong> — endgame missions with full alert and basic reward lists.</li>
+            <li><strong>Ventures 140 missions</strong> — Ventures-only missions at Power 140. Dungeons are excluded.</li>
+            <li><strong>Weekly reward</strong> — which Supercharger (Hero / Survivor / Weapon / Trap / Defender) or Core RE-PERK is on offer this week.</li>
+            <li><strong>Season timers</strong> — live Battle Pass and Ventures countdowns with a progress bar.</li>
+            <li><strong>Per-user filters</strong> — each user picks their zones (Stonewood → Twine Peaks), the reward types they care about, and a minimum V-Bucks amount. Filters apply to the daily push too.</li>
+            <li><strong>Automatic alerts</strong> — daily digest 1 minute after the 00:00 UTC reset, weekly reward 2 minutes after the Thursday reset. Every user can turn them off.</li>
+            <li><strong>Bilingual</strong> — English and Persian, switchable per user at any time.</li>
+            <li><strong>Admin panel</strong> — stats, broadcast with preview, ban/unban, CSV export and import.</li>
+            <li><strong>One-command installer</strong> — asks for your token, admin ID and optional proxy, then sets everything up.</li>
         </ul>
 
-        <h3>⚙️ Step 1: Get Your Telegram Bot Token</h3>
-        <p>Before installing the bot, you need to create a Telegram bot via BotFather:</p>
+        <h2>⚙️ Step 1 — Get a bot token</h2>
         <ol>
             <li>Open Telegram and search for <code>@BotFather</code>.</li>
-            <li>Start a chat and send the command: <code>/newbot</code></li>
-            <li>Follow the prompts to choose a display name for your bot.</li>
-            <li>Choose a unique username ending in <code>bot</code> or <code>_bot</code> (e.g., <code>FortniteAlertsBot</code>).</li>
-            <li>Copy the HTTP API Token provided by BotFather.</li>
+            <li>Send <code>/newbot</code>.</li>
+            <li>Pick a display name, then a unique username ending in <code>bot</code> (e.g. <code>FortniteAlertsBot</code>).</li>
+            <li>Copy the HTTP API token BotFather gives you.</li>
+            <li>Get your numeric chat ID from <code>@userinfobot</code> — that is the admin ID.</li>
         </ol>
 
         <blockquote>
-            <p><strong>⚠️ Warning:</strong> Keep your bot token secure! Do not share it publicly or push it to GitHub.</p>
+            <p><strong>⚠️ Warning:</strong> keep your bot token private. Never commit it to GitHub
+            or paste it into a chat. The installer stores it in a root-only file, never in the source code.</p>
         </blockquote>
 
-        <h3>🚀 Step 2: Installation & Configuration</h3>
-        <p>You can easily install and configure the bot using my automated installation script:</p>
-        <pre><code class="language-bash">bash &lt;(curl -fsSL https://github.com/Plus98ir/Fortnite_Missions/releases/latest/download/install.sh)</code></pre>
+        <h2>🚀 Step 2 — Install</h2>
+        <p>On a fresh Debian or Ubuntu server, as root:</p>
+        <pre><code class="language-bash">bash &lt;(curl -fsSL https://github.com/Plus98ir/Fortnite_Missions/releases/latest/download/install_fortnite_bot.sh)</code></pre>
 
-        <h3>Note: Configuration for Iranian Servers</h3>
-        <p>If you are hosting the bot on an Iranian server, you will need to configure a proxy. Please follow these steps:</p>
+        <blockquote>
+            <p>Use <code>bash &lt;(curl ...)</code>, not <code>curl ... | bash</code>. The installer asks
+            interactive questions and piping would swallow your answers.</p>
+        </blockquote>
 
-        <h4>1. Set the Proxy URL</h4>
-        <p>Open the bot file using your text editor:</p>
-        <pre><code class="language-bash">nano /root/fortnite_bot/vbucks_bot.py</code></pre>
-        <p>Locate the <code>PROXY_URL</code> variable, enter your proxy details, and uncomment the line by removing the <code>#</code>:</p>
-        <pre><code class="language-python">PROXY_URL = "socks5://username:password@127.0.0.1:port"</code></pre>
+        <p>Or download it first if you prefer to read the script before running it:</p>
+        <pre><code class="language-bash">curl -fsSLO https://github.com/Plus98ir/Fortnite_Missions/releases/latest/download/install_fortnite_bot.sh
+sudo bash install_fortnite_bot.sh</code></pre>
 
-        <h4>2. Enable the Proxy in the Application</h4>
-        <p>Scroll down to the <code>if __name__ == '__main__':</code> section and uncomment the following <strong>two</strong> lines to apply the proxy settings:</p>
-        <pre><code class="language-python"># Enable proxy settings if needed:
-    t_request = HTTPXRequest(proxy=PROXY_URL) # <--- Remove '#' to uncomment
-    
-    defaults = Defaults(tzinfo=timezone.utc)
-    
-    application = (
-        ApplicationBuilder()
-        .token(TOKEN)
-        .request(t_request)               # <--- Remove '#' to uncomment
-        .get_updates_request(t_request)   # <--- Remove '#' to uncomment
-        .defaults(defaults)
-        .build()
-    )</code></pre>
-
-        <h4>3. Reboot vbucksbot.service</h4>
-        <pre><code class="language-bash">systemctl restart vbucksbot.service</code></pre>
-
-        <h3>Also:</h3>
+        <p>The installer asks for:</p>
         <ul>
-            <li>If you don't have a server or prefer to skip the installation and setup process, you can use my bot. Just a heads-up, I am not sure how long it will remain active: <code>@plus98vbucks_bot</code></li>
-            <li>The default capacity is set to 200 users for mission notifications.</li>
-            <li>If you installed in personal server To modify this limit on your server, edit the script using (<code>nano /root/fortnite_bot/vbucks_bot.py</code>)</li>
-            <li>Locate the <code>MAX_USERS = 200</code> variable and adjust it to your desired number.</li>
+            <li>your bot token (validated before use, never echoed to the screen);</li>
+            <li>your numeric admin chat ID;</li>
+            <li>whether you need a proxy — and if so its type, host, port and credentials.</li>
         </ul>
+
+        <p>Before starting the service it tests the connection both directly and through
+        the proxy, then tells you which one works. Re-running the installer later upgrades
+        the code and keeps your existing configuration.</p>
+
+        <h2>🌐 Proxy configuration</h2>
+        <p>You no longer edit any Python file. The proxy is a question during install, and
+        can be changed at any time with <code>fnbot config</code>.</p>
+
+        <blockquote>
+            <p><strong>Note:</strong> a proxy is only needed if the server itself cannot reach
+            <code>api.telegram.org</code> — typically an Iranian server. A VPS outside a filtered
+            country needs no proxy at all. If you enter <code>127.0.0.1</code>, remember it means
+            the <em>server's</em> own localhost, not your PC.</p>
+        </blockquote>
+
+        <p>SOCKS5 proxies are automatically upgraded to <code>socks5h</code> for scraping, so DNS
+        is resolved through the proxy rather than leaking to the local resolver.</p>
+
+        <h2>🎛 Management</h2>
+        <p>The installer adds an <code>fnbot</code> command:</p>
+        <table>
+            <thead><tr><th>Command</th><th>What it does</th></tr></thead>
+            <tbody>
+                <tr><td><code>fnbot status</code></td><td>service status</td></tr>
+                <tr><td><code>fnbot logs</code></td><td>follow the live log</td></tr>
+                <tr><td><code>fnbot errors</code></td><td>show only error lines from the log</td></tr>
+                <tr><td><code>fnbot test</code></td><td>test Telegram reachability, direct and via proxy</td></tr>
+                <tr><td><code>fnbot config</code></td><td>edit the config, then restart</td></tr>
+                <tr><td><code>fnbot restart</code></td><td>restart the service</td></tr>
+                <tr><td><code>fnbot uninstall</code></td><td>remove the service (config and users are kept)</td></tr>
+            </tbody>
+        </table>
+
+        <h2>🔧 Configuration file</h2>
+        <p>Everything lives in <code>/etc/fortnite_bot/bot.env</code> (mode 0640, root:fnbot):</p>
+        <table>
+            <thead><tr><th>Setting</th><th>Default</th><th>Meaning</th></tr></thead>
+            <tbody>
+                <tr><td><code>MAX_USERS</code></td><td>200</td><td>user cap for alerts</td></tr>
+                <tr><td><code>DAILY_RESET_UTC</code></td><td>00:01</td><td>daily digest time</td></tr>
+                <tr><td><code>WEEKLY_RESET_UTC</code></td><td>00:02</td><td>weekly reward time</td></tr>
+                <tr><td><code>WEEKLY_RESET_WEEKDAY</code></td><td>3</td><td>0 = Monday, 3 = Thursday</td></tr>
+                <tr><td><code>SEASON_START_UTC</code></td><td>—</td><td>season start, for the progress bar</td></tr>
+                <tr><td><code>SEASON_END_UTC</code></td><td>—</td><td>fallback if the live lookup fails</td></tr>
+                <tr><td><code>DEFAULT_LANG</code></td><td>en</td><td><code>en</code> or <code>fa</code></td></tr>
+                <tr><td><code>LOG_LEVEL</code></td><td>INFO</td><td>set to <code>DEBUG</code> when troubleshooting</td></tr>
+            </tbody>
+        </table>
+
+        <p>After editing, run <code>fnbot restart</code> — or just use <code>fnbot config</code>,
+        which restarts for you.</p>
+
+        <h2>👑 Admin panel</h2>
+        <p>Only the configured admin ID sees the <code>👑 Admin</code> button.</p>
+        <ul>
+            <li><strong>Stats</strong> — total users, subscribers, banned, how many use filters.</li>
+            <li><strong>Broadcast</strong> — press the button then send your message, or use
+                <code>/broadcast your text</code>. Either way you get a preview with
+                confirm/cancel before anything is sent. <code>/cancel</code> aborts.</li>
+            <li><strong>Export</strong> — <code>/export</code> sends a CSV of every user with their
+                language, alert setting, ban state and filters.</li>
+            <li><strong>Import</strong> — send that CSV (or an old <code>users.json</code>) back to the
+                bot to restore. Existing users are updated, new ones added, nobody is deleted.</li>
+            <li><strong>Ban</strong> — <code>/ban ID</code>, <code>/unban ID</code>, <code>/banned</code>.
+                Banned users are silently ignored and receive no alerts.</li>
+            <li><strong>Refresh</strong> — <code>/refresh</code> clears the cache and forces a re-fetch.</li>
+        </ul>
+
+        <h2>⚡ Caching</h2>
+        <p>Mission data changes only at the in-game reset, so the cache is valid until the
+        <em>next reset</em> rather than for a fixed number of minutes:</p>
+        <table>
+            <thead><tr><th>Data</th><th>Valid until</th><th>Survives restart</th></tr></thead>
+            <tbody>
+                <tr><td>Missions (V-Bucks / 160 / Ventures)</td><td>next 00:00 UTC</td><td>yes</td></tr>
+                <tr><td>Weekly reward</td><td>next Thursday reset</td><td>yes</td></tr>
+                <tr><td>Season end date</td><td>daily</td><td>no</td></tr>
+            </tbody>
+        </table>
+        <p>For 20 minutes after a reset the cache refreshes more eagerly, in case the upstream
+        source has not published the new data yet. If a refresh fails, the previous value is
+        served instead of an error.</p>
+
+        <h2>🔐 Security</h2>
+        <ul>
+            <li>The bot runs as the unprivileged <code>fnbot</code> system user, never as root.</li>
+            <li>Secrets live in a 0640 file, not in the source or the systemd unit.</li>
+            <li>Proxy passwords are redacted from every log line.</li>
+            <li>The systemd unit is sandboxed: <code>ProtectSystem=strict</code>, <code>NoNewPrivileges</code>,
+                an empty capability set and a syscall filter.</li>
+            <li>Dependencies are installed in a virtualenv, leaving the system Python untouched.</li>
+            <li>All scraped text is HTML-escaped before being sent to Telegram.</li>
+        </ul>
+
+        <h2>🆕 What changed in v2</h2>
+        <p>If you are coming from the first release, here is what is different.</p>
+
+        <h3>Security</h3>
+        <ul>
+            <li>The token is no longer injected into the Python source with <code>sed</code>; it is read from an environment file.</li>
+            <li>The proxy password is no longer written into the world-readable systemd unit, nor printed to the terminal or the logs.</li>
+            <li>The service dropped from <code>root</code> to a dedicated user with a sandboxed unit.</li>
+            <li><code>pip --break-system-packages</code> replaced by a virtualenv.</li>
+            <li>Proxy credentials are URL-encoded, so special characters no longer break the connection.</li>
+        </ul>
+
+        <h3>Bug fixes</h3>
+        <ul>
+            <li>HTTP requests had no timeout and could hang forever — now bounded, with retries and backoff.</li>
+            <li>The mission source is parsed as raw JSON or as JSON embedded in the page, instead of only the latter.</li>
+            <li><code>PySocks</code> was missing, so SOCKS proxies never worked for scraping.</li>
+            <li>Markdown formatting broke whenever a mission name contained <code>*</code> or <code>_</code> — switched to escaped HTML.</li>
+            <li>The weekly job used a day index that means different things in different
+                python-telegram-bot versions; the weekday is now checked in code.</li>
+            <li>Blocking requests inside async handlers froze the event loop — moved to worker threads.</li>
+            <li><code>users.json</code> was written non-atomically and could be corrupted.</li>
+            <li>Broadcasts had no rate limiting and could hit Telegram's flood limit.</li>
+            <li>The Ventures cycle calculation was wrong across the new year.</li>
+            <li>Messages longer than 4096 characters were silently dropped — they are now split.</li>
+            <li>Works with python-telegram-bot 20, 21 and 22 (the <code>Defaults</code> API changed in 22).</li>
+            <li>A network failure at startup no longer crashes the service into a restart loop.</li>
+            <li>The Battle Pass timer falls back to the configured date when the live lookup fails.</li>
+        </ul>
+
+        <h3>New</h3>
+        <ul>
+            <li>Ventures 140 missions, dungeons excluded.</li>
+            <li>Per-user zone / reward / minimum-V-Bucks filters.</li>
+            <li>Alerts on-off toggle for every user.</li>
+            <li>Full admin panel: broadcast with preview, ban, export, import, refresh.</li>
+            <li>Reset-aware caching, persisted to disk.</li>
+            <li><code>fnbot</code> management command.</li>
+            <li>Connectivity self-test during installation.</li>
+        </ul>
+
+        <h2>⬆️ Upgrading from v1</h2>
+        <p>Just run the installer. It disables the old <code>vbucksbot.service</code>, copies
+        <code>/root/fortnite_bot/users.json</code> to the new location, and migrates the old
+        schedule settings. Nothing is deleted — the old directory stays where it is until
+        you remove it yourself.</p>
+
+        <h2>🩺 Troubleshooting</h2>
+        <p>Start with:</p>
+        <pre><code class="language-bash">fnbot errors
+fnbot test</code></pre>
+
+        <table>
+            <thead><tr><th>Symptom</th><th>Cause</th></tr></thead>
+            <tbody>
+                <tr>
+                    <td><code>httpx.ConnectError: All connection attempts failed</code></td>
+                    <td>The server cannot reach Telegram. If you set a proxy, nothing is listening on that address — check with <code>ss -ltnp | grep PORT</code>. Often the fix is to remove the proxy entirely.</td>
+                </tr>
+                <tr>
+                    <td><code>401 Unauthorized</code></td>
+                    <td>Wrong or revoked token. Get a fresh one from BotFather.</td>
+                </tr>
+                <tr>
+                    <td>Mission lists are empty</td>
+                    <td>The upstream site changed its format, or you are inside the 20-minute window right after a reset. Try <code>/refresh</code>.</td>
+                </tr>
+                <tr>
+                    <td>Ventures list is empty</td>
+                    <td>The zone name did not match the Ventures pattern. Check <code>fnbot logs</code>.</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>📁 Paths</h2>
+        <table>
+            <thead><tr><th>Path</th><th>Contents</th></tr></thead>
+            <tbody>
+                <tr><td><code>/opt/fortnite_bot/</code></td><td>application code and virtualenv</td></tr>
+                <tr><td><code>/etc/fortnite_bot/bot.env</code></td><td>token, admin ID, proxy, settings</td></tr>
+                <tr><td><code>/var/lib/fortnite_bot/</code></td><td><code>users.json</code> and the cache files</td></tr>
+                <tr><td><code>/etc/systemd/system/fortnite-bot.service</code></td><td>the service unit</td></tr>
+            </tbody>
+        </table>
+
+        <h2>📝 Notes</h2>
+        <ul>
+            <li>The default cap is 200 users; change <code>MAX_USERS</code> in the config.</li>
+            <li>Mission data comes from third-party community sites. If one changes its layout, the bot serves the last known data and logs a warning.</li>
+            <li>Update <code>SEASON_START_UTC</code> and <code>SEASON_END_UTC</code> once per season so the Battle Pass progress bar stays accurate.</li>
+        </ul>
+
+        <hr>
+        <div class="badge-row">
+            <a href="https://Plus98ir.github.io">
+                <img src="https://img.shields.io/badge/Website-Plus98ir.github.io-blue?style=for-the-badge&logo=google-chrome" alt="Web Page">
+            </a>
+        </div>
     </div>
 </body>
 </html>
-
- <p align="center">
-  <a href="https://Plus98ir.github.io">
-    <img src="https://img.shields.io/badge/Website-Plus98ir.github.io-blue?style=for-the-badge&logo=google-chrome" alt="Web Page">
-  </a>
-</p>
