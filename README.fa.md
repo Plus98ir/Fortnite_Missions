@@ -15,6 +15,7 @@
 ---
 
 ## 📋 امکانات
+<div style="direction: rtl; text-align: right;">
 
 | | |
 | --- | --- |
