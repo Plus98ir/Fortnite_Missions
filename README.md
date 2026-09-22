@@ -78,6 +78,7 @@ fnbot logs        # follow the live log
 fnbot errors      # only the error lines
 fnbot test        # check Telegram connectivity, direct and via proxy
 fnbot config      # edit the configuration, then restart automatically
+fnbot update
 fnbot restart
 fnbot uninstall   # remove the service (config and users are kept)
 ```
