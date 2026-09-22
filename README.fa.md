@@ -77,6 +77,7 @@ fnbot logs        # مشاهده زنده لاگ
 fnbot errors      # فقط خطوط خطا
 fnbot test        # تست اتصال تلگرام، مستقیم و با پروکسی
 fnbot config      # ویرایش کانفیگ و ری‌استارت خودکار
+fnbot update
 fnbot restart
 fnbot uninstall   # حذف سرویس (کانفیگ و کاربران باقی می‌مانند)
 ```
