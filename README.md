@@ -52,7 +52,7 @@ You also need your **numeric chat ID** for the admin account — send
 On a Debian or Ubuntu server, as root:
 
 ```bash
-bash <(curl -fsSL https://github.com/Plus98ir/Fortnite_Missions/releases/latest/download/install.sh)
+bash <(curl -fsSL https://github.com/Plus98ir/Fortnite_Missions/releases/latest/download/install_fortnite_bot.sh)
 ```
 
 The installer asks for your bot token, your admin chat ID and (optionally) a
