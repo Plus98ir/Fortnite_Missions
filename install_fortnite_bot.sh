@@ -1070,14 +1070,6 @@ REWARD_FILTERS: list[tuple[str, re.Pattern]] = [
     ("XP", re.compile(r"\bxp\b|personnelxp|heroxp|schematicxp|phoenixxp", re.I)),
     ("Legendary", re.compile(r"legendary|" + _RARITY_ID % "sr", re.I)),
     ("Epic", re.compile(r"\bepic\b|" + _RARITY_ID % "vr", re.I)),
-    # High-value missions + upgrade materials: V-Bucks, Legendary/Mythic
-    # items, Legendary Perk-Up, RE-PERK, top evo mats and Legendary Flux.
-    ("🔥 Top + Upgrade", re.compile(
-        r"v[\s_\-]?bucks|currency_mtxswap|mythic|"
-        r"legendary|" + _RARITY_ID % "sr" + r"|"
-        r"re-?perk|alteration_generic|alteration_upgrade_sr|"
-        r"storm shard|eye of the storm|lightning in a bottle|reagent_c_t0[234]|"
-        r"evolverarity_sr", re.I)),
 ]
 REWARD_NAMES = [name for name, _ in REWARD_FILTERS]
 
@@ -1100,9 +1092,11 @@ def zone_key(zone: str) -> str:
 
 
 _FILTER_BY_NAME = dict(REWARD_FILTERS)
-# Rarity / value filters look at alert rewards only: every Twine mission has
-# an "(Epic)" basic reward, which would make these match everything.
-ALERT_ONLY = {"Legendary", "Epic", "🔥 Top + Upgrade"}
+# Rarity filters narrow the type filters: "Legendary" + "Survivor" means a
+# LEGENDARY SURVIVOR, not "any survivor or anything legendary". They look at
+# alert rewards only (every Twine mission has an "(Epic)" basic reward).
+RARITY_FILTERS = {"Legendary", "Epic"}
+ALERT_ONLY = RARITY_FILTERS
 
 
 def _reward_haystack(mission: dict, alert_only: bool = False) -> str:
@@ -1114,21 +1108,21 @@ def _reward_haystack(mission: dict, alert_only: bool = False) -> str:
 
 
 def mission_matches_rewards(mission: dict, selected: list[str]) -> bool:
+    """Types are OR-ed; a selected rarity must hold for the SAME reward."""
+    selected = [n for n in selected if n in _FILTER_BY_NAME]
     if not selected:
         return True
-    full = alert = None
-    for name in selected:
-        pattern = _FILTER_BY_NAME.get(name)
-        if pattern is None:
+    rarities = [_FILTER_BY_NAME[n] for n in selected if n in RARITY_FILTERS]
+    types = [_FILTER_BY_NAME[n] for n in selected if n not in RARITY_FILTERS]
+    alert = mission.get("alert") or []
+    pool = alert if rarities else alert + (mission.get("basic") or [])
+    for r in pool:
+        text = f"{r.get('raw', '')} | {r.get('item', '')}"
+        if types and not any(p.search(text) for p in types):
             continue
-        if name in ALERT_ONLY:
-            alert = _reward_haystack(mission, True) if alert is None else alert
-            hay = alert
-        else:
-            full = _reward_haystack(mission) if full is None else full
-            hay = full
-        if pattern.search(hay):
-            return True
+        if rarities and not any(p.search(text) for p in rarities):
+            continue
+        return True
     return False
 
 
@@ -1182,6 +1176,7 @@ class DayCache:
 
 
 FILTER_CACHE = DayCache()
+TOP_CACHE = DayCache(8)
 PHOTO_CACHE = DayCache(256)   # key -> {"png": bytes, "file_id": str | None}
 
 
@@ -1197,6 +1192,44 @@ def cached_filter(missions: list[dict], prefs: dict, kind: str) -> list[dict]:
         hit = apply_filters(missions, prefs)
         FILTER_CACHE.put(key, missions, hit)
     return hit
+
+
+# Notable alert rewards, the way daily STW summaries list them: V-Bucks,
+# X-Ray tickets, Mythic anything, Legendary heroes/survivors/leads/defenders/
+# schematics, Legendary Perk-Up and Legendary Flux.
+TOP_RE = re.compile(
+    r"v[\s_\-]?bucks|mtxswap|x-?ray|xrayllama|mythic|"
+    r"alteration_upgrade_sr|legendary perk|evolverarity_sr|legendary flux", re.I)
+TOP_ITEM_RE = re.compile(r"worker:|hero:|defender:|schematic:|survivor|\blead\b|"
+                         r"hero|defender|schematic", re.I)
+LEGENDARY_RE = re.compile(r"legendary|(?:^|[_:\s])sr(?=[_\s|)]|$)", re.I)
+
+
+def is_top_reward(r: dict) -> bool:
+    text = f"{r.get('raw', '')} | {r.get('item', '')}"
+    if TOP_RE.search(text):
+        return True
+    raw = str(r.get("raw", ""))
+    looks_item = bool(re.match(r"(worker|hero|defender|schematic):", raw, re.I)) \
+        or bool(re.search(r"survivor|lead|defender|schematic|hero", str(r.get("item", "")), re.I))
+    return looks_item and bool(LEGENDARY_RE.search(text)) and not re.search(r"\bxp\b", text, re.I)
+
+
+def top_missions(missions: list[dict]) -> list[dict]:
+    return [m for m in missions if any(is_top_reward(r) for r in m.get("alert") or [])]
+
+
+def group_by_zone(missions: list[dict]) -> list[tuple[str, list[dict]]]:
+    order = ["Stonewood", "Plankerton", "Canny Valley", "Twine Peaks", "Ventures", "Other"]
+    groups: dict[str, list[dict]] = {}
+    for m in missions:
+        groups.setdefault(zone_key(m.get("zone", "")), []).append(m)
+    return [(z, groups[z]) for z in order if z in groups]
+
+
+def unfiltered(prefs: dict | None) -> dict:
+    """Same user settings minus zone/reward filters (those are finder-only)."""
+    return {**(prefs or DEFAULT_PREFS), "zones": [], "rewards": []}
 
 
 def filters_active(prefs: dict) -> bool:
@@ -1246,6 +1279,11 @@ TEXTS: dict[str, dict[str, str]] = {
         "weekly_week": "Week of {}",
         "weekly_caption": "🛠 This week's reward: {}",
         "btn_finder": "🔎 Reward Finder",
+        "btn_top": "🔥 Top Missions",
+        "top_title": "🔥 <b>Top Missions</b>",
+        "top_zone": "🔥 Top — {}",
+        "top_none": "❌ No notable missions today (V-Bucks, X-Ray tickets, Legendary/Mythic items, Legendary Perk-Up/Flux).",
+        "top_caption": "🔥 Top missions today — {} in {} zone(s)",
         "finder_title": "🔎 <b>Reward Finder — all zones</b>",
         "finder_none": "❌ No mission in any zone has the rewards you picked today.",
         "finder_need": "🔎 Pick at least one reward in ⚙️ My Filters first — the finder then searches every mission in every zone (Stonewood → Twine Peaks and Ventures).",
@@ -1260,8 +1298,8 @@ TEXTS: dict[str, dict[str, str]] = {
         "filter_hint": "🔍 <i>Filters are active.</i>",
         "filters_title": (
             "⚙️ <b>My Filters</b>\n\n"
-            "Nothing selected = everything is shown.\n"
-            "Filters also apply to the daily alerts."
+            "These filters are used only by 🔎 Reward Finder.\n"
+            "V-Bucks, Power 160, Ventures and the daily alerts always show everything."
         ),
         "filters_zones": "— Zones —",
         "filters_rewards": "— Rewards —",
@@ -1401,6 +1439,11 @@ TEXTS: dict[str, dict[str, str]] = {
         "weekly_week": "هفته {}",
         "weekly_caption": "🛠 جایزه این هفته: {}",
         "btn_finder": "🔎 جستجوی جایزه",
+        "btn_top": "🔥 ماموریت‌های برتر",
+        "top_title": "🔥 <b>ماموریت‌های برتر امروز</b>",
+        "top_zone": "🔥 Top — {}",
+        "top_none": "❌ امروز ماموریت برجسته‌ای نیست (ویباکس، تیکت X-Ray، آیتم لجندری/میتیک، پرک‌آپ/فلاکس لجندری).",
+        "top_caption": "🔥 ماموریت‌های برتر امروز — {} ماموریت در {} زون",
         "finder_title": "🔎 <b>جستجوی جایزه — همه زون‌ها</b>",
         "finder_none": "❌ امروز در هیچ زونی ماموریتی با جوایز انتخابی تو نیست.",
         "finder_need": "🔎 اول در ⚙️ فیلترهای من حداقل یک جایزه انتخاب کن؛ بعد این بخش همه ماموریت‌های همه زون‌ها (استون‌وود تا توئین پیکس و ونچر) را می‌گردد.",
@@ -1415,8 +1458,8 @@ TEXTS: dict[str, dict[str, str]] = {
         "filter_hint": "🔍 <i>فیلترها فعال هستند.</i>",
         "filters_title": (
             "⚙️ <b>فیلترهای من</b>\n\n"
-            "اگر چیزی انتخاب نکنی، همه چیز نمایش داده می‌شود.\n"
-            "این فیلترها روی اعلان‌های روزانه هم اعمال می‌شوند."
+            "این فیلترها فقط برای 🔎 جستجوی جایزه استفاده می‌شوند.\n"
+            "ویباکس، پاور ۱۶۰، ونچر و اعلان‌های روزانه همیشه همه چیز را نشان می‌دهند."
         ),
         "filters_zones": "— زون‌ها —",
         "filters_rewards": "— جوایز —",
@@ -1702,8 +1745,8 @@ def main_keyboard(lang: str, chat_id: Any) -> ReplyKeyboardMarkup:
     rows = [
         [KeyboardButton(t(lang, "btn_vbucks")), KeyboardButton(t(lang, "btn_160"))],
         [KeyboardButton(t(lang, "btn_v140")), KeyboardButton(t(lang, "btn_weekly"))],
-        [KeyboardButton(t(lang, "btn_finder")), KeyboardButton(t(lang, "btn_filters"))],
-        [KeyboardButton(t(lang, "btn_timer"))],
+        [KeyboardButton(t(lang, "btn_top")), KeyboardButton(t(lang, "btn_finder"))],
+        [KeyboardButton(t(lang, "btn_filters")), KeyboardButton(t(lang, "btn_timer"))],
         [KeyboardButton(t(lang, "btn_notify_on" if notify else "btn_notify_off")),
          KeyboardButton(t(lang, "btn_image_on" if image else "btn_image_off"))],
         [KeyboardButton(t(lang, "btn_lang"))],
@@ -1827,12 +1870,13 @@ BTN_TIMER = _button_set("btn_timer")
 BTN_LANG = _button_set("btn_lang")
 BTN_FILTERS = _button_set("btn_filters")
 BTN_FINDER = _button_set("btn_finder")
+BTN_TOP = _button_set("btn_top")
 BTN_ADMIN = _button_set("btn_admin")
 BTN_NOTIFY = _button_set("btn_notify_on") | _button_set("btn_notify_off")
 BTN_IMAGE = _button_set("btn_image_on") | _button_set("btn_image_off")
 ALL_BUTTONS = (BTN_VBUCKS | BTN_160 | BTN_V140 | BTN_WEEKLY | BTN_TIMER
                | BTN_LANG | BTN_FILTERS | BTN_ADMIN | BTN_NOTIFY | BTN_IMAGE
-               | BTN_FINDER)
+               | BTN_FINDER | BTN_TOP)
 
 
 # ==========================================================================
@@ -2203,8 +2247,21 @@ async def send_photo_cached(update: Update, key: tuple, source, build_pngs,
                    for n, p in enumerate(pngs, 1)]
         file_ids = await _send_album(message, uploads, caption)
     except TelegramError:
-        log.exception("photo send failed")
-        return False
+        # An album can be refused as a whole; send the pages one by one.
+        log.warning("album send failed; sending pages one by one", exc_info=True)
+        file_ids = []
+        try:
+            for n, p in enumerate(pngs, 1):
+                sent = await message.reply_photo(
+                    photo=InputFile(io.BytesIO(p), filename=f"{n}-{filename}"),
+                    caption=caption if n == 1 else None)
+                if sent is not None and getattr(sent, "photo", None):
+                    file_ids.append(sent.photo[-1].file_id)
+        except TelegramError:
+            log.exception("photo send failed")
+            return False
+        if len(file_ids) != len(pngs):
+            file_ids = []
     PHOTO_CACHE.put(key, source, {"pngs": pngs, "file_ids": file_ids or None})
     return True
 
@@ -2226,6 +2283,44 @@ async def _send_album(message, photos: list, caption: str) -> list[str]:
             if msg is not None and getattr(msg, "photo", None):
                 ids.append(msg.photo[-1].file_id)
     return ids if len(ids) == len(photos) else []
+
+
+def format_top(groups: list[tuple[str, list[dict]]], lang: str) -> str:
+    parts = [t(lang, "top_title"), ""]
+    for zone, missions in groups:
+        parts.append(f"━━━ <b>{E(zone)}</b> ━━━")
+        body = format_missions(missions, lang, unfiltered(None), title_key="top_title",
+                               none_key="top_none")
+        parts.append(body.split("\n", 2)[2] if body.count("\n") >= 2 else body)
+        parts.append("")
+    return "\n".join(parts).rstrip()
+
+
+async def send_top(update: Update, lang: str, prefs: dict, missions: list[dict]) -> None:
+    """Notable missions, one picture per zone (text when images are off)."""
+    tops = TOP_CACHE.get(("top",), missions)
+    if tops is None:
+        tops = top_missions(missions)
+        TOP_CACHE.put(("top",), missions, tops)
+    if not tops:
+        await reply(update, t(lang, "top_none"))
+        return
+    groups = group_by_zone(tops)
+    if not vimg.available():
+        await reply(update, format_top(groups, lang))
+        return
+
+    def build() -> list[bytes]:
+        pages: list[bytes] = []
+        for zone, group in groups:
+            pages += render_pages(group, lang, "top", f"Top Missions — {zone}")
+        return pages
+
+    ok = await send_photo_cached(
+        update, ("top", lang), missions, build,
+        t(lang, "top_caption").format(len(tops), len(groups)), "top.png")
+    if not ok:
+        await reply(update, format_top(groups, lang))
 
 
 async def send_missions(update: Update, lang: str, prefs: dict,
@@ -2263,17 +2358,17 @@ async def safe_fetch(update: Update, lang: str, fn, *args, **kwargs):
 # Handlers — user
 # ==========================================================================
 async def send_vbucks(update, lang, prefs, missions) -> None:
-    await send_missions(update, lang, prefs, missions, kind="vbucks",
+    await send_missions(update, lang, unfiltered(prefs), missions, kind="vbucks",
                         title_key="vbucks_title", none_key="vbucks_none")
 
 
 async def send_power(update, lang, prefs, missions) -> None:
-    await send_missions(update, lang, prefs, missions, kind="power",
+    await send_missions(update, lang, unfiltered(prefs), missions, kind="power",
                         title_key="p160_title", none_key="p160_none")
 
 
 async def send_venture(update, lang, prefs, missions) -> None:
-    await send_missions(update, lang, prefs, missions, kind="venture",
+    await send_missions(update, lang, unfiltered(prefs), missions, kind="venture",
                         title_key="v140_title", none_key="v140_none")
 
 
@@ -2418,6 +2513,10 @@ async def on_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         data = await safe_fetch(update, lang, src.get_weekly)
         if data is not None:
             await send_weekly(update, lang, prefs, data)
+    elif text in BTN_TOP:
+        data = await safe_fetch(update, lang, src.fetch_all_missions)
+        if data is not None:
+            await send_top(update, lang, prefs, data)
     elif text in BTN_FINDER:
         if not prefs.get("rewards"):
             await reply(update, t(lang, "finder_need"),
@@ -3062,13 +3161,13 @@ async def daily_job(context: ContextTypes.DEFAULT_TYPE) -> None:
     def build_power(record: dict) -> str:
         lang = record["lang"]
         return (f"{t(lang, 'daily_title')}\n{SEP}\n\n"
-                f"{format_power(power, lang, 160, record)}")
+                f"{format_power(power, lang, 160, unfiltered(record))}")
 
     def build_venture(record: dict) -> str:
-        return format_venture(venture, record["lang"], record)
+        return format_venture(venture, record["lang"], unfiltered(record))
 
     def build_vbucks(record: dict) -> str:
-        return format_vbucks(vbucks, record["lang"], record)
+        return format_vbucks(vbucks, record["lang"], unfiltered(record))
 
     await broadcast(context, [build_power, build_venture, build_vbucks])
 
@@ -3308,6 +3407,8 @@ GREEN_SOFT = (226, 246, 238)
 SLATE = (120, 128, 156)
 
 ACCENTS = {
+    "top": ((255, 110, 60), (255, 230, 220)),
+    "finder": ((80, 200, 230), (220, 245, 250)),
     "vbucks": (AMBER, AMBER_SOFT),
     "power": (VIOLET, VIOLET_SOFT),
     "venture": (GREEN, GREEN_SOFT),
@@ -3348,6 +3449,29 @@ ART_DIR = Path(os.environ.get("ART_DIR", "/opt/fortnite_bot/art"))
 _ART_CACHE: dict = {}
 
 
+_ART_INDEX: dict = {}
+
+
+def _norm(name: str) -> str:
+    return re.sub(r"[^a-z0-9]", "", str(name).lower())
+
+
+def _art_index(sub: str) -> dict:
+    """{normalised name: path} for ART_DIR/<sub>/*.png, so "V-Bucks.png",
+    "v_bucks.png" and "vbucks.png" all match the slug "vbucks"."""
+    if sub not in _ART_INDEX:
+        folder = ART_DIR / sub if sub else ART_DIR
+        index = {}
+        try:
+            for path in sorted(folder.iterdir()):
+                if path.suffix.lower() == ".png" and path.is_file():
+                    index.setdefault(_norm(path.stem), path)
+        except OSError:
+            pass
+        _ART_INDEX[sub] = index
+    return _ART_INDEX[sub]
+
+
 def art(slug, size: int, sub: str = ""):
     """Load art/<sub>/<slug>.png resized to size, or None.
 
@@ -3363,10 +3487,10 @@ def art(slug, size: int, sub: str = ""):
     key = (sub, slug, size)
     if key in _ART_CACHE:
         return _ART_CACHE[key]
-    path = (ART_DIR / sub / f"{slug}.png") if sub else (ART_DIR / f"{slug}.png")
+    path = _art_index(sub).get(_norm(slug))
     image = None
     try:
-        if path.is_file():
+        if path is not None:
             image = Image.open(path).convert("RGBA").resize(
                 (size, size), Image.LANCZOS)
     except Exception:
@@ -3382,7 +3506,7 @@ HEADER_H = 86
 CARD_PAD = 20
 ROW_H = 32
 FOOTER_H = 40
-MAX_CARDS = int(os.environ.get("IMAGE_MAX_CARDS", "20"))
+MAX_CARDS = int(os.environ.get("IMAGE_MAX_CARDS", "10"))
 MAX_REWARDS = 7
 
 _UNSUPPORTED = re.compile(
@@ -4149,6 +4273,23 @@ ROW_H2 = 104
 ZONE_H = 32
 
 
+ZONE_ART = (
+    (re.compile(r"stonewood", re.I), ["stonewood", "sw"]),
+    (re.compile(r"plankerton", re.I), ["plankerton", "pl"]),
+    (re.compile(r"canny", re.I), ["canny_valley", "canny", "cv"]),
+    (re.compile(r"twine", re.I), ["twine_peaks", "twine", "tp"]),
+)
+
+
+def zone_art(zone: str, size: int):
+    """zones/<name>.png for a zone; Ventures zones try their own name first."""
+    names = _slug(ZONE_ART, zone, None)
+    if names is None:
+        first = re.sub(r"\s*venture\s*zone\s*", "", zone or "", flags=re.I)
+        names = [first, zone, "ventures", "venture"]
+    return art(names, size, "zones")
+
+
 def _short(label: str, limit: int = 18) -> str:
     return label if len(label) <= limit else label[:limit - 1] + "…"
 
@@ -4245,11 +4386,13 @@ def _render(missions, title, kind, footer, hidden):
     for index, m in enumerate(missions):
         zone = _safe(m.get("zone", ""), 40).upper()
         if zone != last_zone:
-            zw = ld.textlength(zone, font=f_zone) if hasattr(ld, "textlength") else 200
+            zicon = zone_art(m.get("zone", ""), 26)
+            shift = 30 if zicon is not None else 0
+            zw = ld.textlength(zone, font=f_zone) + shift
             ld.rounded_rectangle([PAD, y + 4, PAD + zw + 24, y + 26], radius=11,
                                  fill=(14, 12, 32, 190), outline=accent + (220,), width=1)
             y += ZONE_H
-            row_boxes.append(("zone", zone, y - ZONE_H))
+            row_boxes.append(("zone", zone, y - ZONE_H, shift, zicon))
             last_zone = zone
         rewards = m.get("rewards") or []
         has_vb = any(r.get("key") == "vbucks" for r in rewards if not r.get("basic"))
@@ -4268,7 +4411,9 @@ def _render(missions, title, kind, footer, hidden):
 
     for entry in row_boxes:
         if entry[0] == "zone":
-            draw.text((PAD + 12, entry[2] + 7), entry[1], font=f_zone, fill=accent)
+            draw.text((PAD + 12 + entry[3], entry[2] + 7), entry[1], font=f_zone, fill=accent)
+            if entry[4] is not None:
+                image.paste(entry[4], (PAD + 8, entry[2] + 2), entry[4])
             continue
         _, m, y = entry
         rewards = m.get("rewards") or []
@@ -4414,7 +4559,7 @@ cloudscraper>=1.2.71
 Pillow>=10.0
 REQ_EOF
 
-install -d -m 0755 "$APP_DIR/art" "$APP_DIR/art/rewards" "$APP_DIR/art/weekly"
+install -d -m 0755 "$APP_DIR/art" "$APP_DIR/art/rewards" "$APP_DIR/art/weekly" "$APP_DIR/art/zones"
 chmod 0644 "$APP_DIR"/*.py "$APP_DIR/requirements.txt"
 chown -R root:root "$APP_DIR"
 
@@ -4451,7 +4596,7 @@ BROADCAST_DELAY="0.06"
 LOG_LEVEL="INFO"
 DEFAULT_LANG="en"
 # Missions per picture in image mode; longer lists are sent as an album.
-IMAGE_MAX_CARDS="20"
+IMAGE_MAX_CARDS="10"
 # Drop your own square PNGs in ART_DIR to replace the drawn icons. Several
 # names are tried per slot (first hit wins), e.g. bomb|deliver|dtb:
 #   page     : background   (full-page backdrop for every picture)
@@ -4462,6 +4607,10 @@ IMAGE_MAX_CARDS="20"
 #              designs material venture_xp survivor_xp schematic_xp hero_xp xp
 #              candy gold ticket lead survivor defender hero trap schematic
 #   weekly/  : weapon hero survivor trap defender core
+#   zones/   : stonewood plankerton canny_valley twine_peaks ventures
+#              (or the Ventures zone name itself, e.g. hexsylvania)
+# Names are matched loosely: "V-Bucks.png" = "v_bucks.png" = "vbucks.png".
+# Re-download after changing art.zip:  fnbot art   (fnbot art --force)
 ART_DIR="/opt/fortnite_bot/art"
 # Art pack (.zip of PNGs) downloaded into ART_DIR on install/update.
 # Files you replaced yourself are never overwritten. "" = disabled.
@@ -4490,7 +4639,7 @@ ensure_conf() {
     grep -q "^$1=" "$CONF_FILE" 2>/dev/null || printf '%s="%s"\n' "$1" "$2" >> "$CONF_FILE"
 }
 ensure_conf UPDATE_URL "$UPDATE_URL"
-ensure_conf IMAGE_MAX_CARDS "20"
+ensure_conf IMAGE_MAX_CARDS "10"
 ensure_conf WEEKLY_URL2 ""
 ensure_conf ART_DIR "$APP_DIR/art"
 ensure_conf ART_URL "$ART_URL_DEFAULT"
@@ -4505,8 +4654,8 @@ chown root:"$APP_USER" "$CONF_FILE"
 chmod 0640 "$CONF_FILE"
 
 # Compact list layout fits more missions per picture.
-if grep -q '^IMAGE_MAX_CARDS="12"' "$CONF_FILE" 2>/dev/null; then
-    sed -i 's|^IMAGE_MAX_CARDS=.*|IMAGE_MAX_CARDS="20"|' "$CONF_FILE"
+if grep -qE '^IMAGE_MAX_CARDS="(12|20)"' "$CONF_FILE" 2>/dev/null; then
+    sed -i 's|^IMAGE_MAX_CARDS=.*|IMAGE_MAX_CARDS="10"|' "$CONF_FILE"
 fi
 
 # Retire the old fixed-TTL cache setting (superseded by reset-boundary caching).
@@ -4667,6 +4816,7 @@ case "${1:-help}" in
   logs)    journalctl -u "$SERVICE" -f -n 100 ;;
   config)  ${EDITOR:-nano} /etc/fortnite_bot/bot.env && systemctl restart "$SERVICE" ;;
   update)  /usr/local/bin/fnbot-update ;;
+  art)     /usr/local/bin/fnbot-art "${2:-}" && systemctl restart "$SERVICE" ;;
   version) grep '^BOT_VERSION=' /etc/fortnite_bot/bot.env | cut -d'"' -f2 ;;
   errors)  journalctl -u "$SERVICE" -n 200 --no-pager \
              | grep -iE "error|exception|refused|timed out|unauthor|fatal" | tail -n 30 ;;
@@ -4691,11 +4841,11 @@ case "${1:-help}" in
       rm -f "/etc/systemd/system/${SERVICE}.service" \
             "/etc/systemd/system/${SERVICE}-update.service" \
             "/etc/systemd/system/${SERVICE}-update.path" \
-            /usr/local/bin/fnbot /usr/local/bin/fnbot-update
+            /usr/local/bin/fnbot /usr/local/bin/fnbot-update /usr/local/bin/fnbot-art
       systemctl daemon-reload
       echo "Service removed. Data kept in /var/lib/fortnite_bot, config in /etc/fortnite_bot."
       ;;
-  *) echo "usage: fnbot {start|stop|restart|status|logs|errors|test|update|version|config|uninstall}" ;;
+  *) echo "usage: fnbot {start|stop|restart|status|logs|errors|test|update|art [--force]|version|config|uninstall}" ;;
 esac
 CLI_EOF
 chmod 0755 /usr/local/bin/fnbot
@@ -4778,28 +4928,38 @@ rm -f "$SHA_TMP"
 # Never fatal. Re-extracts only when the zip changes, and never overwrites
 # a PNG the admin replaced by hand (tracked in .art_manifest).
 # --------------------------------------------------------------------------
+cat > /usr/local/bin/fnbot-art <<'ART_SH_EOF'
+#!/usr/bin/env bash
+# Download ART_URL (a .zip of PNGs) and unpack it into ART_DIR.
+# Layout: <name>.png at the root, rewards/, weekly/, zones/ sub-folders
+# (an extra top folder such as art/ is stripped). Never fatal. Re-extracts
+# only when the zip changed; PNGs replaced by hand are kept (.art_manifest).
+set -uo pipefail
+CONF_FILE="/etc/fortnite_bot/bot.env"
+ok()   { printf '\033[32m%s\033[0m\n' "$*"; }
+warn() { printf '\033[33m%s\033[0m\n' "$*"; }
 conf_get() { grep -m1 "^$1=" "$CONF_FILE" 2>/dev/null | cut -d'"' -f2; }
-fetch_art() {
-    local url dir tmp rc=0
-    url="$(conf_get ART_URL)"
-    dir="$(conf_get ART_DIR)"; dir="${dir:-$APP_DIR/art}"
-    if [[ -z "$url" ]]; then
-        c_warn "ℹ️  ART_URL is empty — skipping the art pack."; return 0
-    fi
-    [[ "$url" =~ ^https?:// ]] || { c_warn "⚠️  ART_URL is not an http(s) URL — skipped."; return 0; }
-    install -d -m 0755 "$dir" "$dir/rewards" "$dir/weekly"
-    tmp="$(mktemp)"
-    local proxy=()
-    if [[ -n "${PROXY_URL:-}" ]]; then proxy=(--proxy "$PROXY_URL"); fi
-    if ! curl -fsSL --max-time 120 --retry 2 "${proxy[@]}" "$url" -o "$tmp" 2>/dev/null; then
-        rm -f "$tmp"
-        c_warn "⚠️  Could not download the art pack ($url) — using drawn scenes."
-        return 0
-    fi
-    python3 - "$tmp" "$dir" <<'ART_PY_EOF' || rc=$?
-import hashlib, json, os, sys, zipfile
+[[ "${1:-}" == "--force" ]] && FORCE=1 || FORCE=0
+url="$(conf_get ART_URL)"
+dir="$(conf_get ART_DIR)"; dir="${dir:-/opt/fortnite_bot/art}"
+proxy_url="$(conf_get PROXY_URL)"
+if [[ -z "$url" ]]; then warn "ℹ️  ART_URL is empty — skipping the art pack."; exit 0; fi
+[[ "$url" =~ ^https?:// ]] || { warn "⚠️  ART_URL is not an http(s) URL — skipped."; exit 0; }
+install -d -m 0755 "$dir" "$dir/rewards" "$dir/weekly" "$dir/zones"
+tmp="$(mktemp)"; trap 'rm -f "$tmp"' EXIT
+proxy=(); [[ -n "$proxy_url" ]] && proxy=(--proxy "$proxy_url")
+code="$(curl -sSL --max-time 180 --retry 2 "${proxy[@]}" -w '%{http_code}' -o "$tmp" "$url" 2>/dev/null || true)"
+if [[ "$code" != "200" ]]; then
+    warn "⚠️  Could not download the art pack (HTTP ${code:-error}): $url"
+    warn "    Upload art.zip to the latest GitHub release, or fix ART_URL (fnbot config)."
+    exit 0
+fi
+python3 - "$tmp" "$dir" "$FORCE" > "$tmp.out" 2>&1 <<'ART_PY_EOF'
+import hashlib, json, os, re, sys, zipfile
 zpath, root = sys.argv[1], os.path.realpath(sys.argv[2])
+force = len(sys.argv) > 3 and sys.argv[3] == "1"
 MAX_FILE, MAX_TOTAL = 8 << 20, 150 << 20
+SUBDIRS = ("rewards", "weekly", "zones")
 man_path = os.path.join(root, ".art_manifest")
 def sha(b): return hashlib.sha256(b).hexdigest()
 try:
@@ -4807,7 +4967,7 @@ try:
 except Exception:
     man = {}
 with open(zpath, "rb") as f: zsum = sha(f.read())
-if man.get("_zip") == zsum:
+if man.get("_zip") == zsum and not force:
     print("ART:SAME"); sys.exit(0)
 try:
     z = zipfile.ZipFile(zpath)
@@ -4819,24 +4979,24 @@ infos = [i for i in z.infolist() if not i.is_dir()
 names = [i.filename.replace("\\", "/") for i in infos]
 # Strip one common top folder (art.zip may contain art/...).
 tops = {n.split("/", 1)[0] for n in names}
-strip = len(tops) == 1 and all("/" in n for n in names) and tops.pop().lower() not in ("rewards", "weekly")
-new_man, added, kept, total = {"_zip": zsum}, 0, 0, 0
+strip = len(tops) == 1 and all("/" in n for n in names) and tops.pop().lower() not in SUBDIRS
+new_man, added, kept, total, skipped = {"_zip": zsum}, 0, 0, 0, 0
 for info, name in zip(infos, names):
     rel = name.split("/", 1)[1] if strip else name
     parts = rel.split("/")
     if (len(parts) > 2 or any(p in ("", ".", "..") for p in parts)
-            or (len(parts) == 2 and parts[0].lower() not in ("rewards", "weekly"))):
-        continue
-    rel = "/".join(p.lower() for p in parts)
+            or (len(parts) == 2 and parts[0].lower() not in SUBDIRS)):
+        skipped += 1; continue
+    rel = "/".join(re.sub(r"[\s\-]+", "_", p.strip().lower()) for p in parts)
     if info.file_size > MAX_FILE or total + info.file_size > MAX_TOTAL:
-        continue
+        skipped += 1; continue
     data = z.read(info)
     if not data.startswith(b"\x89PNG\r\n\x1a\n"):
-        continue
+        skipped += 1; continue
     total += len(data)
     dest = os.path.realpath(os.path.join(root, rel))
     if not dest.startswith(root + os.sep):
-        continue
+        skipped += 1; continue
     new_sum = sha(data)
     if os.path.exists(dest):
         with open(dest, "rb") as f: cur = sha(f.read())
@@ -4849,32 +5009,26 @@ for info, name in zip(infos, names):
     new_man[rel] = new_sum; added += 1
 with open(man_path + ".tmp", "w") as f: json.dump(new_man, f, indent=0)
 os.chmod(man_path + ".tmp", 0o644); os.replace(man_path + ".tmp", man_path)
-print(f"ART:OK {added} {kept}")
+print(f"ART:OK {added} {kept} {skipped}")
 ART_PY_EOF
-    rm -f "$tmp"
-    chown -R root:root "$dir" 2>/dev/null || true
-    case "$rc" in
-        0) ;;
-        3) c_warn "⚠️  ART_URL did not return a valid .zip — art pack skipped." ;;
-        *) c_warn "⚠️  Art pack could not be unpacked — using drawn scenes." ;;
-    esac
-    return 0
-}
+out="$(cat "$tmp.out" 2>/dev/null)"; rm -f "$tmp.out"
+chown -R root:root "$dir" 2>/dev/null || true
+case "$out" in
+    ART:SAME*)   ok "✅ Art pack already up to date." ;;
+    ART:OK*)     read -r _ n k skipped <<< "$out"
+                 ok "✅ Art pack installed: ${n} image(s) into $dir"
+                 [[ "${k:-0}" != "0" ]] && warn "ℹ️  Kept ${k} image(s) you replaced yourself."
+                 [[ "${skipped:-0}" != "0" ]] && warn "ℹ️  Skipped ${skipped} file(s) (not PNG / bad path / too big)."
+                 ;;
+    ART:BADZIP*) warn "⚠️  ART_URL did not return a valid .zip — art pack skipped." ;;
+    *)           warn "⚠️  Art pack could not be unpacked — using drawn icons."; echo "$out" | tail -n 3 ;;
+esac
+exit 0
+ART_SH_EOF
+chmod 0755 /usr/local/bin/fnbot-art
+
 echo "Fetching art pack…"
-ART_OUT="$(fetch_art 2>&1)" || true
-while IFS= read -r line; do
-    case "$line" in
-        "ART:SAME") c_ok "✅ Art pack already up to date." ;;
-        ART:OK*)    read -r _ ART_N ART_K <<< "$line"
-                    c_ok "✅ Art pack installed: ${ART_N} image(s)."
-                    if [[ "${ART_K:-0}" != "0" ]]; then
-                        c_warn "ℹ️  Kept ${ART_K} image(s) you replaced yourself."
-                    fi ;;
-        ART:BADZIP) ;;
-        "") ;;
-        *) echo "$line" ;;
-    esac
-done <<< "$ART_OUT"
+/usr/local/bin/fnbot-art || true
 
 echo "[7/7] Starting service…"
 
