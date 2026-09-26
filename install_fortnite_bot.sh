@@ -922,6 +922,7 @@ from telegram import (
     InlineKeyboardButton,
     InlineKeyboardMarkup,
     InputFile,
+    InputMediaPhoto,
     KeyboardButton,
     ReplyKeyboardMarkup,
     Update,
@@ -2144,6 +2145,14 @@ def image_rewards(mission: dict, kind: str) -> list[dict]:
     return rows
 
 
+def render_pages(missions: list[dict], lang: str, kind: str, title: str) -> list[bytes]:
+    payload = [{
+        "zone": m["zone"], "name": m["name"], "power": m["power"],
+        "biome": m["biome"], "rewards": image_rewards(m, kind),
+    } for m in missions]
+    return vimg.render_pages(payload, title=title, kind=kind)
+
+
 def render_card(missions: list[dict], lang: str, kind: str, title: str) -> bytes | None:
     payload = [{
         "zone": m["zone"],
@@ -2168,31 +2177,55 @@ async def reply(update: Update, text: str, **kwargs) -> None:
         kwargs.pop("reply_markup", None)
 
 
-async def send_photo_cached(update: Update, key: tuple, source, build_png,
+async def send_photo_cached(update: Update, key: tuple, source, build_pngs,
                             caption: str, filename: str) -> bool:
-    """Send a picture, reusing the day's render and Telegram file_id."""
+    """Send one or more pictures, reusing the day's renders and file_ids.
+
+    ``build_pngs`` returns a list of PNG pages; several pages go out as one
+    album (max 10 per album, caption on the first picture).
+    """
     entry = PHOTO_CACHE.get(key, source)
     message = update.effective_message
-    if entry and entry.get("file_id"):
+    file_ids = entry.get("file_ids") if entry else None
+    if file_ids:
         try:
-            await message.reply_photo(photo=entry["file_id"], caption=caption)
+            await _send_album(message, file_ids, caption)
             return True
         except TelegramError:
-            log.debug("cached file_id rejected; re-uploading", exc_info=True)
-    png = entry.get("png") if entry else None
-    if png is None:
-        png = await asyncio.to_thread(build_png)
-        if not png:
+            log.debug("cached file_ids rejected; re-uploading", exc_info=True)
+    pngs = entry.get("pngs") if entry else None
+    if not pngs:
+        pngs = await asyncio.to_thread(build_pngs)
+        if not pngs:
             return False
     try:
-        sent = await message.reply_photo(
-            photo=InputFile(io.BytesIO(png), filename=filename), caption=caption)
+        uploads = [InputFile(io.BytesIO(p), filename=f"{n}-{filename}")
+                   for n, p in enumerate(pngs, 1)]
+        file_ids = await _send_album(message, uploads, caption)
     except TelegramError:
         log.exception("photo send failed")
         return False
-    file_id = sent.photo[-1].file_id if sent and sent.photo else None
-    PHOTO_CACHE.put(key, source, {"png": png, "file_id": file_id})
+    PHOTO_CACHE.put(key, source, {"pngs": pngs, "file_ids": file_ids or None})
     return True
+
+
+async def _send_album(message, photos: list, caption: str) -> list[str]:
+    """Send photos (InputFile or file_id); returns the file_ids Telegram gave."""
+    ids: list[str] = []
+    for start in range(0, len(photos), 10):
+        group = photos[start:start + 10]
+        cap = caption if start == 0 else None
+        if len(group) == 1:
+            sent = await message.reply_photo(photo=group[0], caption=cap)
+            sent = [sent]
+        else:
+            media = [InputMediaPhoto(media=p, caption=cap if i == 0 else None)
+                     for i, p in enumerate(group)]
+            sent = await message.reply_media_group(media=media)
+        for msg in sent or []:
+            if msg is not None and getattr(msg, "photo", None):
+                ids.append(msg.photo[-1].file_id)
+    return ids if len(ids) == len(photos) else []
 
 
 async def send_missions(update: Update, lang: str, prefs: dict,
@@ -2208,7 +2241,7 @@ async def send_missions(update: Update, lang: str, prefs: dict,
     title = re.sub(r"<[^>]+>", "", t(lang, title_key))
     key = ("img", lang) + filter_key(title_key, prefs)
     ok = await send_photo_cached(
-        update, key, missions, lambda: render_card(shown, lang, kind, title),
+        update, key, missions, lambda: render_pages(shown, lang, kind, title),
         t(lang, "image_caption").format(title, len(shown)), f"{kind}.png")
     if not ok:
         await reply(update, t(lang, "image_failed"))
@@ -3612,15 +3645,32 @@ def _card_height(mission: dict) -> int:
 
 def render(missions: list[dict], *, title: str, kind: str = "vbucks",
            footer: str | None = None) -> bytes | None:
-    """Render up to MAX_CARDS missions. Returns PNG bytes, or None."""
+    """First page only (kept for callers that want one picture)."""
+    pages = render_pages(missions, title=title, kind=kind, footer=footer)
+    return pages[0] if pages else None
+
+
+def render_pages(missions: list[dict], *, title: str, kind: str = "vbucks",
+                 footer: str | None = None) -> list[bytes]:
+    """Every mission, split into pages of MAX_CARDS rows (one PNG each).
+
+    Nothing is dropped: a long list becomes several pictures instead of a
+    "+N more" note. One very tall picture would be shrunk by Telegram and
+    become unreadable on a phone, so pages stay phone-sized.
+    """
     if not available() or not missions:
-        return None
+        return []
+    per = max(4, MAX_CARDS)
+    chunks = [missions[i:i + per] for i in range(0, len(missions), per)]
+    pages = []
     try:
-        return _render(missions[:MAX_CARDS], title, kind, footer,
-                       hidden=max(0, len(missions) - MAX_CARDS))
+        for n, chunk in enumerate(chunks, 1):
+            head = f"{title}  ({n}/{len(chunks)})" if len(chunks) > 1 else title
+            pages.append(_render(chunk, head, kind, footer, hidden=0))
     except Exception:
         log.exception("image rendering failed")
-        return None
+        return []
+    return pages
 
 
 def _header_mark(draw, x, y, s, kind):
@@ -3876,6 +3926,7 @@ SCENES = (
     (re.compile(r"bomb|dtb|deliver", re.I), sc_bomb),
     (re.compile(r"rescue|survivor", re.I), sc_rescue),
     (re.compile(r"encampment|eliminate", re.I), sc_storm),
+    (re.compile(r"refuel|homebase", re.I), sc_repair),
 )
 
 
@@ -3903,7 +3954,7 @@ SCENE_SLUGS = (
     (re.compile(r"storm|category", re.I), ["storm"]),
     (re.compile(r"bomb|dtb|deliver", re.I), ["bomb", "deliver", "dtb"]),
     (re.compile(r"rescue|survivor", re.I), ["rescue"]),
-    (re.compile(r"refuel|homebase", re.I), ["refuel"]),
+    (re.compile(r"refuel|homebase", re.I), ["refuel", "refuel_homebase", "homebase"]),
 )
 
 # (pattern on "raw id | display name", art names, drawer, default colour)
@@ -3914,6 +3965,8 @@ _C = {
     "water": (70, 150, 245), "nature": (110, 200, 90),
     "evo": (150, 110, 235), "xp": (120, 210, 120), "gold": (245, 190, 60),
     "candy": (240, 110, 170), "person": (240, 150, 60), "hero": (240, 150, 60),
+    "vxp": (60, 210, 200), "sxp": (245, 160, 70), "schxp": (90, 160, 245),
+    "hxp": (240, 90, 90),
     "def": (240, 150, 60), "schem": (90, 170, 240), "trap": (90, 170, 240),
 }
 
@@ -4005,10 +4058,10 @@ REWARD_KINDS = (
     (re.compile(r"flux|evolverarity", re.I), ["flux", "material"], ic_flux, "evo"),
     (re.compile(r"training manual|reagent_people", re.I), ["manual", "material"], ic_book, "evo"),
     (re.compile(r"designs|reagent_weapons|reagent_traps", re.I), ["designs", "material"], ic_book, "schem"),
-    (re.compile(r"venture\s*xp|phoenixxp", re.I), ["venture_xp", "xp"], ic_xp, "xp"),
-    (re.compile(r"survivor\s*xp|personnelxp", re.I), ["survivor_xp", "xp"], ic_xp, "xp"),
-    (re.compile(r"schematic\s*xp|schematicxp", re.I), ["schematic_xp", "xp"], ic_xp, "xp"),
-    (re.compile(r"hero\s*xp|heroxp", re.I), ["hero_xp", "xp"], ic_xp, "xp"),
+    (re.compile(r"venture\s*xp|phoenixxp", re.I), ["venture_xp", "xp"], ic_xp, "vxp"),
+    (re.compile(r"survivor\s*xp|personnelxp", re.I), ["survivor_xp", "xp"], ic_xp, "sxp"),
+    (re.compile(r"schematic\s*xp|schematicxp", re.I), ["schematic_xp", "xp"], ic_xp, "schxp"),
+    (re.compile(r"hero\s*xp|heroxp", re.I), ["hero_xp", "xp"], ic_xp, "hxp"),
     (re.compile(r"\bxp\b|experience", re.I), ["xp"], ic_xp, "xp"),
     (re.compile(r"candy", re.I), ["candy", "gold"], ic_candy, "candy"),
     (re.compile(r"\bgold\b|eventcurrency_scaling|coin", re.I), ["gold"], ic_coin, "gold"),
@@ -4022,7 +4075,7 @@ REWARD_KINDS = (
 )
 
 # Every art name the renderer looks for (for docs / the installer comment).
-ART_NAMES = sorted({n for _, names in SCENE_SLUGS for n in names} | {"default"}) + \
+ART_NAMES = sorted({n for _, names in SCENE_SLUGS for n in names} | {"default", "background"}) + \
     sorted({f"rewards/{n}" for _, names, _, _ in REWARD_KINDS for n in names}) + \
     [f"weekly/{k}" for k in ("weapon", "hero", "survivor", "trap", "defender", "core")]
 
@@ -4084,18 +4137,77 @@ def _bolt(d, x, y, s, c):
 # ==========================================================================
 # Compact list layout (one row per mission, rewards as icon chips)
 # ==========================================================================
-BG_ROW = ((36, 30, 62), (44, 37, 74))
-BG_VB = (104, 24, 168)
-BG_PAGE = (26, 22, 46)
-EDGE = (84, 72, 140)
 CREAM_T = (245, 240, 228)
-DIM = (170, 164, 200)
-ROW_H2 = 78
-ZONE_H = 30
+DIM = (178, 172, 208)
+EDGE = (84, 72, 140)
+BG_PAGE = (26, 22, 46)
+ROW_FILL = ((30, 26, 58, 205), (38, 32, 70, 205))
+ROW_EDGE = (126, 108, 214, 210)
+VB_FILL = (104, 24, 168, 225)
+VB_EDGE = (214, 150, 255, 255)
+ROW_H2 = 104
+ZONE_H = 32
 
 
 def _short(label: str, limit: int = 18) -> str:
     return label if len(label) <= limit else label[:limit - 1] + "…"
+
+
+def _reward_label(item: str) -> str:
+    label = split_rarity(item)[0].replace("!", "").strip()
+    return re.sub(r"\bXp\b", "XP", label)
+
+
+def _background(w: int, h: int, accent) -> "Image.Image":
+    """art/background.png (cover-cropped) or a drawn storm-night backdrop."""
+    custom = None
+    for name in ("background", "bg"):
+        path = ART_DIR / f"{name}.png"
+        if path.is_file():
+            try:
+                custom = Image.open(path).convert("RGB")
+                break
+            except Exception:
+                log.debug("bad background %s", path, exc_info=True)
+    if custom is not None:
+        scale = max(w / custom.width, h / custom.height)
+        custom = custom.resize((int(custom.width * scale) + 1, int(custom.height * scale) + 1),
+                               Image.LANCZOS)
+        left, top = (custom.width - w) // 2, (custom.height - h) // 2
+        bg = custom.crop((left, top, left + w, top + h)).convert("RGBA")
+        shade = Image.new("RGBA", (w, h), (12, 10, 26, 120))
+        return Image.alpha_composite(bg, shade)
+
+    bg = Image.new("RGBA", (w, h))
+    d = ImageDraw.Draw(bg)
+    top, bot = (22, 20, 52), (46, 22, 70)
+    for y in range(h):
+        r = y / max(1, h - 1)
+        d.line([(0, y), (w, y)], fill=tuple(int(a + (b - a) * r) for a, b in zip(top, bot)))
+    # soft glows
+    glow = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    g = ImageDraw.Draw(glow)
+    for cx, cy, rad, col in ((w * .85, 60, 320, (130, 70, 220)),
+                             (w * .10, h * .55, 360, (40, 120, 200)),
+                             (w * .70, h * .95, 300, (170, 60, 190))):
+        for i in range(12, 0, -1):
+            rr = rad * i / 12
+            g.ellipse([cx - rr, cy - rr, cx + rr, cy + rr], fill=col + (int(9 * (13 - i) / 12),))
+    # faint grid + deterministic star specks, blended on their own layer
+    specks = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    d = ImageDraw.Draw(specks)
+    for x in range(0, w, 48):
+        d.line([(x, 0), (x, h)], fill=(160, 140, 255, 14))
+    for y in range(0, h, 48):
+        d.line([(0, y), (w, y)], fill=(160, 140, 255, 14))
+    seed = 1234567
+    for _ in range(int(w * h / 9000)):
+        seed = (seed * 1103515245 + 12345) & 0x7fffffff
+        x = seed % w
+        seed = (seed * 1103515245 + 12345) & 0x7fffffff
+        y = seed % h
+        d.point((x, y), fill=(255, 255, 255, 110))
+    return Image.alpha_composite(Image.alpha_composite(bg, glow), specks)
 
 
 def _render(missions, title, kind, footer, hidden):
@@ -4106,70 +4218,82 @@ def _render(missions, title, kind, footer, hidden):
     f_dim = _font(15)
     f_qty = _font(16, True)
     f_lab = _font(11, True)
+    f_basic = _font(12)
     f_small = _font(13)
 
-    W, PAD, BADGE = 1000, 18, 58
+    W, PAD, BADGE = 1000, 18, 68
     zones = []
     for m in missions:
         z = _safe(m.get("zone", ""), 40).upper()
         if not zones or zones[-1] != z:
             zones.append(z)
-    top = 76
-    height = top + len(missions) * (ROW_H2 + 4) + len(zones) * ZONE_H + PAD + 30
+    top = 78
+    note = footer or ""
+    height = top + len(missions) * (ROW_H2 + 6) + len(zones) * ZONE_H + PAD + (30 if note else 6)
 
-    image = Image.new("RGB", (W, height), BG_PAGE)
-    draw = ImageDraw.Draw(image)
-    draw.rounded_rectangle([6, 6, W - 7, height - 7], radius=16, outline=EDGE, width=2)
-    safe_title = _safe(title, 50)
-    tw = draw.textlength(safe_title, font=f_title)
-    draw.text(((W - tw) / 2, 20), safe_title, font=f_title, fill=CREAM_T)
-    draw.line([(PAD + 30, 62), (W - PAD - 30, 62)], fill=accent, width=2)
+    canvas = _background(W, height, accent)
+    layer = Image.new("RGBA", (W, height), (0, 0, 0, 0))
+    ld = ImageDraw.Draw(layer)
+    # title plate
+    ld.rounded_rectangle([PAD, 12, W - PAD, 66], radius=14, fill=(14, 12, 32, 170),
+                         outline=accent + (230,), width=2)
+    ld.rounded_rectangle([6, 6, W - 7, height - 7], radius=18, outline=ROW_EDGE, width=2)
 
     y = top
     last_zone = None
+    row_boxes = []
     for index, m in enumerate(missions):
         zone = _safe(m.get("zone", ""), 40).upper()
         if zone != last_zone:
-            draw.text((PAD + 6, y + 6), zone, font=f_zone, fill=accent)
-            zw = draw.textlength(zone, font=f_zone)
-            draw.line([(PAD + 16 + zw, y + 15), (W - PAD, y + 15)], fill=EDGE, width=1)
+            zw = ld.textlength(zone, font=f_zone) if hasattr(ld, "textlength") else 200
+            ld.rounded_rectangle([PAD, y + 4, PAD + zw + 24, y + 26], radius=11,
+                                 fill=(14, 12, 32, 190), outline=accent + (220,), width=1)
             y += ZONE_H
+            row_boxes.append(("zone", zone, y - ZONE_H))
             last_zone = zone
+        rewards = m.get("rewards") or []
+        has_vb = any(r.get("key") == "vbucks" for r in rewards if not r.get("basic"))
+        ld.rounded_rectangle([PAD, y, W - PAD, y + ROW_H2], radius=12,
+                             fill=VB_FILL if has_vb else ROW_FILL[index % 2],
+                             outline=VB_EDGE if has_vb else ROW_EDGE, width=2)
+        row_boxes.append(("row", m, y))
+        y += ROW_H2 + 6
 
+    image = Image.alpha_composite(canvas, layer)
+    draw = ImageDraw.Draw(image)
+
+    safe_title = _safe(title, 56)
+    tw = draw.textlength(safe_title, font=f_title)
+    draw.text(((W - tw) / 2, 22), safe_title, font=f_title, fill=CREAM_T)
+
+    for entry in row_boxes:
+        if entry[0] == "zone":
+            draw.text((PAD + 12, entry[2] + 7), entry[1], font=f_zone, fill=accent)
+            continue
+        _, m, y = entry
         rewards = m.get("rewards") or []
         alert = [r for r in rewards if not r.get("basic")]
         basic = [r for r in rewards if r.get("basic")]
-        has_vb = any(r.get("key") == "vbucks" for r in alert)
-        bg = BG_VB if has_vb else BG_ROW[index % 2]
-        draw.rounded_rectangle([PAD, y, W - PAD, y + ROW_H2], radius=10, fill=bg)
 
         plate, mask = _scene_plate(BADGE, m.get("name", ""))
-        image.paste(plate, (PAD + 10, y + (ROW_H2 - BADGE) // 2), mask)
+        image.paste(plate, (PAD + 12, y + (ROW_H2 - BADGE) // 2), mask)
 
-        x = PAD + 10 + BADGE + 14
+        x0 = PAD + 12 + BADGE + 14
+        x = x0
         power = m.get("power") or 0
         if power:
-            _bolt(draw, x, y + 11, 16, BOLT)
-            draw.text((x + 16, y + 9), str(power), font=f_name, fill=CREAM_T)
+            _bolt(draw, x, y + 10, 16, BOLT)
+            draw.text((x + 16, y + 8), str(power), font=f_name, fill=CREAM_T)
             x += 22 + draw.textlength(str(power), font=f_name) + 10
         name = _safe(m.get("name", ""), 48)
-        biome = _safe(m.get("biome", ""), 28)
-        draw.text((x, y + 9), name, font=f_name, fill=CREAM_T)
+        biome = _safe(m.get("biome", ""), 30)
+        draw.text((x, y + 8), name, font=f_name, fill=CREAM_T)
         if biome:
             nx = x + draw.textlength(name, font=f_name)
-            draw.text((nx, y + 11), f"  -  {biome}", font=f_dim, fill=DIM)
+            draw.text((nx, y + 10), f"  -  {biome}", font=f_dim, fill=DIM)
 
-        # basic rewards: small icons, right aligned on the top line
-        bx = W - PAD - 12
-        for r in basic[:6]:
-            ico = _icon(f"{r.get('raw', '')} | {r.get('item', '')}", 22)
-            bx -= 26
-            image.paste(ico, (int(bx), y + 8), ico)
-
-        # alert rewards: icon chips on the second line
-        cx = PAD + 10 + BADGE + 14
-        cy = y + 40
-        limit = W - PAD - 12
+        # line 2: alert rewards as chips
+        cx, cy, limit = x0, y + 36, W - PAD - 12
         for r in alert[:MAX_REWARDS]:
             raw_name = str(r.get("item", "Item"))
             label, rarity = split_rarity(raw_name)
@@ -4178,29 +4302,40 @@ def _render(missions, title, kind, footer, hidden):
             if qty > 1:
                 text, font, colour = f"{qty:,}", f_qty, CREAM_T
             else:
-                text, font, colour = _short(_safe(label, 30).upper()), f_lab, rarity or DIM
+                text, font, colour = _short(_safe(_reward_label(raw_name), 30).upper()), \
+                    f_lab, rarity or DIM
             need = 32 + draw.textlength(text, font=font) + 18
             if cx + need > limit:
                 break
             image.paste(ico, (int(cx), cy), ico)
-            ty = cy + (5 if qty > 1 else 8)
-            draw.text((cx + 33, ty), text, font=font, fill=colour)
+            draw.text((cx + 33, cy + (5 if qty > 1 else 8)), text, font=font, fill=colour)
             cx += need
         if not alert:
             draw.text((cx, cy + 6), "-", font=f_dim, fill=DIM)
-        y += ROW_H2 + 4
 
-    note = footer or ""
-    if hidden:
-        extra = f"+{hidden} more — switch to text mode to see them all"
-        note = f"{note}   ·   {extra}" if note else extra
+        # line 3: basic rewards, small icon + name so they are readable
+        bx, by = x0, y + 74
+        seen = set()
+        for r in basic:
+            label = _short(_safe(_reward_label(str(r.get("item", ""))), 24), 16)
+            if not label or label in seen:
+                continue
+            seen.add(label)
+            ico = _icon(f"{r.get('raw', '')} | {r.get('item', '')}", 18)
+            need = 22 + draw.textlength(label, font=f_basic) + 16
+            if bx + need > limit:
+                break
+            image.paste(ico, (int(bx), by), ico)
+            draw.text((bx + 22, by + 2), label, font=f_basic, fill=DIM)
+            bx += need
+
     if note:
         draw.text((PAD, height - 30), _fit(draw, _safe(note, 120), f_small, W - 2 * PAD),
                   font=f_small, fill=DIM)
 
     buffer = io.BytesIO()
-    image.convert("P", palette=Image.Palette.ADAPTIVE, colors=224).save(
-        buffer, format="PNG", optimize=True)
+    # Full colour: a 240-colour palette merged the small icon colours.
+    image.convert("RGB").save(buffer, format="PNG", optimize=True)
     return buffer.getvalue()
 
 
@@ -4222,7 +4357,7 @@ def render_weekly(label: str, *, key: str = "", title: str = "This Week's Reward
         return None
     try:
         W, H, ICON = 900, 340, 190
-        image = Image.new("RGB", (W, H), BG_PAGE)
+        image = _background(W, H, AMBER).convert("RGB")
         draw = ImageDraw.Draw(image)
         draw.rounded_rectangle([6, 6, W - 7, H - 7], radius=18, outline=EDGE, width=2)
         f_title, f_label, f_small = _font(26, True), _font(36, True), _font(15)
@@ -4315,12 +4450,13 @@ REQUEST_TIMEOUT="15"
 BROADCAST_DELAY="0.06"
 LOG_LEVEL="INFO"
 DEFAULT_LANG="en"
-# Missions drawn on one image card (image mode). Higher means a bigger file.
+# Missions per picture in image mode; longer lists are sent as an album.
 IMAGE_MAX_CARDS="20"
 # Drop your own square PNGs in ART_DIR to replace the drawn icons. Several
 # names are tried per slot (first hit wins), e.g. bomb|deliver|dtb:
+#   page     : background   (full-page backdrop for every picture)
 #   missions : evacuate repair lightning data balloon radar storm trap_storm
-#              bomb encampments eliminate rescue refuel default
+#              bomb encampments eliminate rescue refuel|refuel_homebase default
 #   rewards/ : vbucks reperk perkup ampup fireup frostup perk
 #              lightning_bottle eye_storm storm_shard pure_drop flux manual
 #              designs material venture_xp survivor_xp schematic_xp hero_xp xp
