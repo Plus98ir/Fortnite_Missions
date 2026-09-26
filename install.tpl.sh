@@ -193,15 +193,16 @@ IMAGE_MAX_CARDS="10"
 # Drop your own square PNGs in ART_DIR to replace the drawn icons. Several
 # names are tried per slot (first hit wins), e.g. bomb|deliver|dtb:
 #   page     : background   (full-page backdrop for every picture)
-#   missions : evacuate repair lightning data balloon radar storm trap_storm
+#   missions (root or scenes/): evacuate repair lightning|van data balloon
+#              radar storm|atlas survive trap_storm
 #              bomb encampments eliminate rescue refuel|refuel_homebase
 #              titan|hunt_the_titan default
 #   rewards/ : vbucks reperk perkup ampup fireup frostup perk
 #              lightning_bottle eye_storm storm_shard pure_drop flux manual
 #              designs material venture_xp survivor_xp schematic_xp hero_xp xp
 #              candy gold ticket lead survivor defender hero trap schematic
-#   weekly/  : weapon hero survivor trap defender core
-#   zones/   : stonewood plankerton canny_valley twine_peaks ventures
+#   weekly/  : weapon|schematic hero survivor trap defender core|perk
+#   zones/ (or zone/): stonewood plankerton canny_valley twine_peaks ventures
 #              (or the Ventures zone name itself, e.g. hexsylvania)
 # Names are matched loosely: "V-Bucks.png" = "v_bucks.png" = "vbucks.png".
 # Re-download after changing art.zip:  fnbot art   (fnbot art --force)
@@ -545,7 +546,7 @@ dir="$(conf_get ART_DIR)"; dir="${dir:-/opt/fortnite_bot/art}"
 proxy_url="$(conf_get PROXY_URL)"
 if [[ -z "$url" ]]; then warn "ℹ️  ART_URL is empty — skipping the art pack."; exit 0; fi
 [[ "$url" =~ ^https?:// ]] || { warn "⚠️  ART_URL is not an http(s) URL — skipped."; exit 0; }
-install -d -m 0755 "$dir" "$dir/rewards" "$dir/weekly" "$dir/zones"
+install -d -m 0755 "$dir" "$dir/rewards" "$dir/weekly" "$dir/zones" "$dir/scenes"
 tmp="$(mktemp)"; trap 'rm -f "$tmp"' EXIT
 proxy=(); [[ -n "$proxy_url" ]] && proxy=(--proxy "$proxy_url")
 code="$(curl -sSL --max-time 180 --retry 2 "${proxy[@]}" -w '%{http_code}' -o "$tmp" "$url" 2>/dev/null || true)"
@@ -559,7 +560,7 @@ import hashlib, json, os, re, sys, zipfile
 zpath, root = sys.argv[1], os.path.realpath(sys.argv[2])
 force = len(sys.argv) > 3 and sys.argv[3] == "1"
 MAX_FILE, MAX_TOTAL = 8 << 20, 150 << 20
-SUBDIRS = ("rewards", "weekly", "zones")
+SUBDIRS = ("rewards", "weekly", "zones", "zone", "scenes", "missions")
 man_path = os.path.join(root, ".art_manifest")
 def sha(b): return hashlib.sha256(b).hexdigest()
 try:

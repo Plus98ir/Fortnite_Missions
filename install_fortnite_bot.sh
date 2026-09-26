@@ -3536,18 +3536,26 @@ def _norm(name: str) -> str:
     return re.sub(r"[^a-z0-9]", "", str(name).lower())
 
 
+# Folder aliases: mission art may sit at the root or in scenes/ (missions/),
+# zone art in zones/ or zone/.
+_SUB_ALIASES = {"": ("", "scenes", "missions"), "zones": ("zones", "zone")}
+
+
 def _art_index(sub: str) -> dict:
     """{normalised name: path} for ART_DIR/<sub>/*.png, so "V-Bucks.png",
-    "v_bucks.png" and "vbucks.png" all match the slug "vbucks"."""
+    "v_bucks.png" and "vbucks.png" all match the slug "vbucks". Empty
+    (0-byte) files are ignored."""
     if sub not in _ART_INDEX:
-        folder = ART_DIR / sub if sub else ART_DIR
         index = {}
-        try:
-            for path in sorted(folder.iterdir()):
-                if path.suffix.lower() == ".png" and path.is_file():
-                    index.setdefault(_norm(path.stem), path)
-        except OSError:
-            pass
+        for folder_name in _SUB_ALIASES.get(sub, (sub,)):
+            folder = ART_DIR / folder_name if folder_name else ART_DIR
+            try:
+                for path in sorted(folder.iterdir()):
+                    if path.suffix.lower() == ".png" and path.is_file() \
+                            and path.stat().st_size > 0:
+                        index.setdefault(_norm(path.stem), path)
+            except OSError:
+                pass
         _ART_INDEX[sub] = index
     return _ART_INDEX[sub]
 
@@ -4148,14 +4156,15 @@ def mission_scene(name: str):
 SCENE_SLUGS = (
     (re.compile(r"evacuate", re.I), ["evacuate"]),
     (re.compile(r"repair the shelter", re.I), ["repair"]),
-    (re.compile(r"ride the lightning", re.I), ["lightning", "rtl"]),
+    (re.compile(r"ride the lightning", re.I), ["lightning", "van", "rtl"]),
     (re.compile(r"retrieve|retrive|data", re.I), ["data", "retrieve"]),
     (re.compile(r"balloon|launch", re.I), ["balloon", "data"]),
     (re.compile(r"radar", re.I), ["radar"]),
     (re.compile(r"encampment", re.I), ["encampments", "encampment", "camps"]),
     (re.compile(r"eliminate", re.I), ["eliminate", "eac"]),
-    (re.compile(r"trap the storm", re.I), ["trap_storm", "storm"]),
-    (re.compile(r"storm|category", re.I), ["storm"]),
+    (re.compile(r"trap the storm", re.I), ["trap_storm", "storm", "atlas"]),
+    (re.compile(r"survive the storm", re.I), ["survive", "survive_the_storm", "storm"]),
+    (re.compile(r"storm|category", re.I), ["storm", "atlas"]),
     (re.compile(r"bomb|dtb|deliver", re.I), ["bomb", "deliver", "dtb"]),
     (re.compile(r"rescue|survivor", re.I), ["rescue"]),
     (re.compile(r"refuel|homebase", re.I), ["refuel", "refuel_homebase", "homebase"]),
@@ -4628,6 +4637,9 @@ WEEKLY_DRAWN = {
     "survivor": (ic_person, (240, 150, 60)), "trap": (ic_trap, (90, 170, 240)),
     "defender": (ic_shield, (240, 150, 60)), "core": (ic_reperk, (230, 120, 60)),
 }
+WEEKLY_ART_NAMES = {"weapon": ["weapon", "schematic"], "core": ["core", "perk", "reperk"],
+                    "hero": ["hero"], "survivor": ["survivor"], "trap": ["trap"],
+                    "defender": ["defender"]}
 WEEKLY_REWARD_ART = {"weapon": ["schematic"], "hero": ["hero"], "survivor": ["survivor"],
                      "trap": ["trap"], "defender": ["defender"], "core": ["reperk", "perk"]}
 
@@ -4650,7 +4662,7 @@ def render_weekly(label: str, *, key: str = "", title: str = "This Week's Reward
         ix, iy = 60, 92
         draw.rounded_rectangle([ix - 8, iy - 8, ix + ICON + 8, iy + ICON + 8], radius=22,
                                fill=(52, 42, 92), outline=AMBER, width=3)
-        pic = art(key, ICON, "weekly") if key else None
+        pic = art(WEEKLY_ART_NAMES.get(key, [key]), ICON, "weekly") if key else None
         if pic is None and key:
             pic = art(WEEKLY_REWARD_ART.get(key, []), ICON, "rewards")
         if pic is None:
@@ -4736,15 +4748,16 @@ IMAGE_MAX_CARDS="10"
 # Drop your own square PNGs in ART_DIR to replace the drawn icons. Several
 # names are tried per slot (first hit wins), e.g. bomb|deliver|dtb:
 #   page     : background   (full-page backdrop for every picture)
-#   missions : evacuate repair lightning data balloon radar storm trap_storm
+#   missions (root or scenes/): evacuate repair lightning|van data balloon
+#              radar storm|atlas survive trap_storm
 #              bomb encampments eliminate rescue refuel|refuel_homebase
 #              titan|hunt_the_titan default
 #   rewards/ : vbucks reperk perkup ampup fireup frostup perk
 #              lightning_bottle eye_storm storm_shard pure_drop flux manual
 #              designs material venture_xp survivor_xp schematic_xp hero_xp xp
 #              candy gold ticket lead survivor defender hero trap schematic
-#   weekly/  : weapon hero survivor trap defender core
-#   zones/   : stonewood plankerton canny_valley twine_peaks ventures
+#   weekly/  : weapon|schematic hero survivor trap defender core|perk
+#   zones/ (or zone/): stonewood plankerton canny_valley twine_peaks ventures
 #              (or the Ventures zone name itself, e.g. hexsylvania)
 # Names are matched loosely: "V-Bucks.png" = "v_bucks.png" = "vbucks.png".
 # Re-download after changing art.zip:  fnbot art   (fnbot art --force)
@@ -5088,7 +5101,7 @@ dir="$(conf_get ART_DIR)"; dir="${dir:-/opt/fortnite_bot/art}"
 proxy_url="$(conf_get PROXY_URL)"
 if [[ -z "$url" ]]; then warn "ℹ️  ART_URL is empty — skipping the art pack."; exit 0; fi
 [[ "$url" =~ ^https?:// ]] || { warn "⚠️  ART_URL is not an http(s) URL — skipped."; exit 0; }
-install -d -m 0755 "$dir" "$dir/rewards" "$dir/weekly" "$dir/zones"
+install -d -m 0755 "$dir" "$dir/rewards" "$dir/weekly" "$dir/zones" "$dir/scenes"
 tmp="$(mktemp)"; trap 'rm -f "$tmp"' EXIT
 proxy=(); [[ -n "$proxy_url" ]] && proxy=(--proxy "$proxy_url")
 code="$(curl -sSL --max-time 180 --retry 2 "${proxy[@]}" -w '%{http_code}' -o "$tmp" "$url" 2>/dev/null || true)"
@@ -5102,7 +5115,7 @@ import hashlib, json, os, re, sys, zipfile
 zpath, root = sys.argv[1], os.path.realpath(sys.argv[2])
 force = len(sys.argv) > 3 and sys.argv[3] == "1"
 MAX_FILE, MAX_TOTAL = 8 << 20, 150 << 20
-SUBDIRS = ("rewards", "weekly", "zones")
+SUBDIRS = ("rewards", "weekly", "zones", "zone", "scenes", "missions")
 man_path = os.path.join(root, ".art_manifest")
 def sha(b): return hashlib.sha256(b).hexdigest()
 try:
