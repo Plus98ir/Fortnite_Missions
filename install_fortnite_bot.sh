@@ -4155,7 +4155,9 @@ def mission_scene(name: str):
 # --------------------------------------------------------------------------
 SCENE_SLUGS = (
     (re.compile(r"evacuate", re.I), ["evacuate"]),
-    (re.compile(r"repair the shelter", re.I), ["repair"]),
+    (re.compile(r"repair the shelter", re.I), ["repair", "repair_shelter"]),
+    (re.compile(r"resupply|supply drop", re.I), ["resupply"]),
+    (re.compile(r"rocket", re.I), ["rocket"]),
     (re.compile(r"ride the lightning", re.I), ["lightning", "van", "rtl"]),
     (re.compile(r"retrieve|retrive|data", re.I), ["data", "retrieve"]),
     (re.compile(r"balloon|launch", re.I), ["balloon", "data"]),
@@ -4298,7 +4300,8 @@ REWARD_KINDS = (
     (re.compile(r"pure drop|drop of rain|reagent_c_t01", re.I), ["pure_drop", "material"], ic_drop, "water"),
     (re.compile(r"flux|evolverarity", re.I), ["flux", "material"], ic_flux, "evo"),
     (re.compile(r"training manual|reagent_people", re.I), ["manual", "material"], ic_book, "evo"),
-    (re.compile(r"designs|reagent_weapons|reagent_traps", re.I), ["designs", "material"], ic_book, "schem"),
+    (re.compile(r"trap designs|reagent_traps", re.I), ["trap_designs", "trap", "designs", "material"], ic_book, "schem"),
+    (re.compile(r"designs|reagent_weapons", re.I), ["weapon_designs", "designs", "material"], ic_book, "schem"),
     (re.compile(r"venture\s*xp|phoenixxp", re.I), ["venture_xp", "xp"], ic_xp, "vxp"),
     (re.compile(r"survivor\s*xp|personnelxp", re.I), ["survivor_xp", "xp"], ic_xp, "sxp"),
     (re.compile(r"schematic\s*xp|schematicxp", re.I), ["schematic_xp", "xp"], ic_xp, "schxp"),
@@ -4316,7 +4319,7 @@ REWARD_KINDS = (
 )
 
 # Every art name the renderer looks for (for docs / the installer comment).
-ART_NAMES = sorted({n for _, names in SCENE_SLUGS for n in names} | {"default", "background"}) + \
+ART_NAMES = sorted({n for _, names in SCENE_SLUGS for n in names} | {"background"}) + \
     sorted({f"rewards/{n}" for _, names, _, _ in REWARD_KINDS for n in names}) + \
     [f"weekly/{k}" for k in ("weapon", "hero", "survivor", "trap", "defender", "core")]
 
@@ -4326,7 +4329,35 @@ def reward_kind(text: str):
     for pattern, names, drawer, colour in REWARD_KINDS:
         if pattern.search(text or ""):
             return names, drawer, _C[colour]
-    return ["default"], ic_dot, SLATE
+    return [], ic_dot, SLATE
+
+
+_TIER_WORD = re.compile(r"\b(mythic|legendary|epic|rare|uncommon|common)\b", re.I)
+_TIER_ID = (("_sr", "legendary"), ("_vr", "epic"), ("_uc", "uncommon"),
+            ("_r", "rare"), ("_c", "common"))
+
+
+def rarity_of(text: str) -> str:
+    """"Epic Perk-Up!" / "reagent_alteration_upgrade_vr" -> "epic"."""
+    m = _TIER_WORD.search(text or "")
+    if m:
+        return m.group(1).lower()
+    raw = (text or "").split("|")[0].strip().lower()
+    for suffix, tier in _TIER_ID:
+        if raw.endswith(suffix) or f"{suffix}_" in raw:
+            return tier
+    return ""
+
+
+def scene_names(name: str) -> list:
+    """Art names for a mission; Category N storms try atlas_N first."""
+    names = list(_slug(SCENE_SLUGS, name, []))
+    m = re.search(r"category\s*(\d)", name or "", re.I)
+    if m:
+        names = [f"atlas_{m.group(1)}"] + names
+    elif re.search(r"fight the storm", name or "", re.I):
+        names = names + ["atlas_1"]
+    return names
 
 
 def _slug(table, name, default):
@@ -4338,7 +4369,7 @@ def _slug(table, name, default):
 
 def _scene_plate(size, name):
     """Draw at 3x and downsample: cheap anti-aliasing for the curves."""
-    custom = art(_slug(SCENE_SLUGS, name, ["default"]), size)
+    custom = art(scene_names(name), size)
     mask = Image.new("L", (size, size), 0)
     ImageDraw.Draw(mask).rounded_rectangle([0, 0, size - 1, size - 1],
                                            radius=max(6, size // 7), fill=255)
@@ -4361,6 +4392,10 @@ def _icon(text: str, size: int, colour=None):
     names, drawer, default = reward_kind(text)
     if default not in _RARITY_TINTED:
         colour = None
+    if names and names[0] in ("perkup", "flux"):
+        tier = rarity_of(text)
+        if tier:
+            names = [f"{tier}_{names[0]}"] + names
     custom = art(names, size, "rewards")
     if custom is not None:
         return custom
@@ -4637,7 +4672,7 @@ WEEKLY_DRAWN = {
     "survivor": (ic_person, (240, 150, 60)), "trap": (ic_trap, (90, 170, 240)),
     "defender": (ic_shield, (240, 150, 60)), "core": (ic_reperk, (230, 120, 60)),
 }
-WEEKLY_ART_NAMES = {"weapon": ["weapon", "schematic"], "core": ["core", "perk", "reperk"],
+WEEKLY_ART_NAMES = {"weapon": ["weapon", "schematic"], "core": ["core", "core_reperk", "reperk", "perk"],
                     "hero": ["hero"], "survivor": ["survivor"], "trap": ["trap"],
                     "defender": ["defender"]}
 WEEKLY_REWARD_ART = {"weapon": ["schematic"], "hero": ["hero"], "survivor": ["survivor"],
@@ -4748,13 +4783,15 @@ IMAGE_MAX_CARDS="10"
 # Drop your own square PNGs in ART_DIR to replace the drawn icons. Several
 # names are tried per slot (first hit wins), e.g. bomb|deliver|dtb:
 #   page     : background   (full-page backdrop for every picture)
-#   missions (root or scenes/): evacuate repair lightning|van data balloon
-#              radar storm|atlas survive trap_storm
+#   missions (root or scenes/): evacuate repair|repair_shelter lightning|van
+#              data balloon radar storm|atlas atlas_1..atlas_4 (Category 1-4)
+#              survive trap_storm resupply rocket
 #              bomb encampments eliminate rescue refuel|refuel_homebase
-#              titan|hunt_the_titan default
-#   rewards/ : vbucks reperk perkup ampup fireup frostup perk
+#              titan|hunt_the_titan   (missing/empty file = drawn icon)
+#   rewards/ : vbucks reperk perkup (+ uncommon_/rare_/epic_/legendary_perkup)
+#              flux (+ rare_/epic_/legendary_flux) ampup fireup frostup perk
 #              lightning_bottle eye_storm storm_shard pure_drop flux manual
-#              designs material venture_xp survivor_xp schematic_xp hero_xp xp
+#              designs|weapon_designs trap_designs material venture_xp survivor_xp schematic_xp hero_xp xp
 #              candy gold ticket lead survivor defender hero trap schematic
 #   weekly/  : weapon|schematic hero survivor trap defender core|perk
 #   zones/ (or zone/): stonewood plankerton canny_valley twine_peaks ventures
@@ -5147,7 +5184,8 @@ for info, name in zip(infos, names):
     if info.file_size > MAX_FILE or total + info.file_size > MAX_TOTAL:
         skipped += 1; continue
     data = z.read(info)
-    if not data.startswith(b"\x89PNG\r\n\x1a\n"):
+    if not (data.startswith(b"\x89PNG\r\n\x1a\n") or data[:3] == b"\xff\xd8\xff"
+            or (data[:4] == b"RIFF" and data[8:12] == b"WEBP")):   # PNG/JPEG/WebP
         skipped += 1; continue
     total += len(data)
     dest = os.path.realpath(os.path.join(root, rel))

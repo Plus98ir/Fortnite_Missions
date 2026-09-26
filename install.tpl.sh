@@ -193,13 +193,15 @@ IMAGE_MAX_CARDS="10"
 # Drop your own square PNGs in ART_DIR to replace the drawn icons. Several
 # names are tried per slot (first hit wins), e.g. bomb|deliver|dtb:
 #   page     : background   (full-page backdrop for every picture)
-#   missions (root or scenes/): evacuate repair lightning|van data balloon
-#              radar storm|atlas survive trap_storm
+#   missions (root or scenes/): evacuate repair|repair_shelter lightning|van
+#              data balloon radar storm|atlas atlas_1..atlas_4 (Category 1-4)
+#              survive trap_storm resupply rocket
 #              bomb encampments eliminate rescue refuel|refuel_homebase
-#              titan|hunt_the_titan default
-#   rewards/ : vbucks reperk perkup ampup fireup frostup perk
+#              titan|hunt_the_titan   (missing/empty file = drawn icon)
+#   rewards/ : vbucks reperk perkup (+ uncommon_/rare_/epic_/legendary_perkup)
+#              flux (+ rare_/epic_/legendary_flux) ampup fireup frostup perk
 #              lightning_bottle eye_storm storm_shard pure_drop flux manual
-#              designs material venture_xp survivor_xp schematic_xp hero_xp xp
+#              designs|weapon_designs trap_designs material venture_xp survivor_xp schematic_xp hero_xp xp
 #              candy gold ticket lead survivor defender hero trap schematic
 #   weekly/  : weapon|schematic hero survivor trap defender core|perk
 #   zones/ (or zone/): stonewood plankerton canny_valley twine_peaks ventures
@@ -592,7 +594,8 @@ for info, name in zip(infos, names):
     if info.file_size > MAX_FILE or total + info.file_size > MAX_TOTAL:
         skipped += 1; continue
     data = z.read(info)
-    if not data.startswith(b"\x89PNG\r\n\x1a\n"):
+    if not (data.startswith(b"\x89PNG\r\n\x1a\n") or data[:3] == b"\xff\xd8\xff"
+            or (data[:4] == b"RIFF" and data[8:12] == b"WEBP")):   # PNG/JPEG/WebP
         skipped += 1; continue
     total += len(data)
     dest = os.path.realpath(os.path.join(root, rel))
