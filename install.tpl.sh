@@ -194,7 +194,8 @@ IMAGE_MAX_CARDS="10"
 # names are tried per slot (first hit wins), e.g. bomb|deliver|dtb:
 #   page     : background   (full-page backdrop for every picture)
 #   missions : evacuate repair lightning data balloon radar storm trap_storm
-#              bomb encampments eliminate rescue refuel|refuel_homebase default
+#              bomb encampments eliminate rescue refuel|refuel_homebase
+#              titan|hunt_the_titan default
 #   rewards/ : vbucks reperk perkup ampup fireup frostup perk
 #              lightning_bottle eye_storm storm_shard pure_drop flux manual
 #              designs material venture_xp survivor_xp schematic_xp hero_xp xp
