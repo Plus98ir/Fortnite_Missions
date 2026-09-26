@@ -152,7 +152,7 @@ cloudscraper>=1.2.71
 Pillow>=10.0
 REQ_EOF
 
-install -d -m 0755 "$APP_DIR/art" "$APP_DIR/art/rewards" "$APP_DIR/art/weekly"
+install -d -m 0755 "$APP_DIR/art" "$APP_DIR/art/rewards" "$APP_DIR/art/weekly" "$APP_DIR/art/zones"
 chmod 0644 "$APP_DIR"/*.py "$APP_DIR/requirements.txt"
 chown -R root:root "$APP_DIR"
 
@@ -189,7 +189,7 @@ BROADCAST_DELAY="0.06"
 LOG_LEVEL="INFO"
 DEFAULT_LANG="en"
 # Missions per picture in image mode; longer lists are sent as an album.
-IMAGE_MAX_CARDS="20"
+IMAGE_MAX_CARDS="10"
 # Drop your own square PNGs in ART_DIR to replace the drawn icons. Several
 # names are tried per slot (first hit wins), e.g. bomb|deliver|dtb:
 #   page     : background   (full-page backdrop for every picture)
@@ -200,6 +200,10 @@ IMAGE_MAX_CARDS="20"
 #              designs material venture_xp survivor_xp schematic_xp hero_xp xp
 #              candy gold ticket lead survivor defender hero trap schematic
 #   weekly/  : weapon hero survivor trap defender core
+#   zones/   : stonewood plankerton canny_valley twine_peaks ventures
+#              (or the Ventures zone name itself, e.g. hexsylvania)
+# Names are matched loosely: "V-Bucks.png" = "v_bucks.png" = "vbucks.png".
+# Re-download after changing art.zip:  fnbot art   (fnbot art --force)
 ART_DIR="/opt/fortnite_bot/art"
 # Art pack (.zip of PNGs) downloaded into ART_DIR on install/update.
 # Files you replaced yourself are never overwritten. "" = disabled.
@@ -228,7 +232,7 @@ ensure_conf() {
     grep -q "^$1=" "$CONF_FILE" 2>/dev/null || printf '%s="%s"\n' "$1" "$2" >> "$CONF_FILE"
 }
 ensure_conf UPDATE_URL "$UPDATE_URL"
-ensure_conf IMAGE_MAX_CARDS "20"
+ensure_conf IMAGE_MAX_CARDS "10"
 ensure_conf WEEKLY_URL2 ""
 ensure_conf ART_DIR "$APP_DIR/art"
 ensure_conf ART_URL "$ART_URL_DEFAULT"
@@ -243,8 +247,8 @@ chown root:"$APP_USER" "$CONF_FILE"
 chmod 0640 "$CONF_FILE"
 
 # Compact list layout fits more missions per picture.
-if grep -q '^IMAGE_MAX_CARDS="12"' "$CONF_FILE" 2>/dev/null; then
-    sed -i 's|^IMAGE_MAX_CARDS=.*|IMAGE_MAX_CARDS="20"|' "$CONF_FILE"
+if grep -qE '^IMAGE_MAX_CARDS="(12|20)"' "$CONF_FILE" 2>/dev/null; then
+    sed -i 's|^IMAGE_MAX_CARDS=.*|IMAGE_MAX_CARDS="10"|' "$CONF_FILE"
 fi
 
 # Retire the old fixed-TTL cache setting (superseded by reset-boundary caching).
@@ -405,6 +409,7 @@ case "${1:-help}" in
   logs)    journalctl -u "$SERVICE" -f -n 100 ;;
   config)  ${EDITOR:-nano} /etc/fortnite_bot/bot.env && systemctl restart "$SERVICE" ;;
   update)  /usr/local/bin/fnbot-update ;;
+  art)     /usr/local/bin/fnbot-art "${2:-}" && systemctl restart "$SERVICE" ;;
   version) grep '^BOT_VERSION=' /etc/fortnite_bot/bot.env | cut -d'"' -f2 ;;
   errors)  journalctl -u "$SERVICE" -n 200 --no-pager \
              | grep -iE "error|exception|refused|timed out|unauthor|fatal" | tail -n 30 ;;
@@ -429,11 +434,11 @@ case "${1:-help}" in
       rm -f "/etc/systemd/system/${SERVICE}.service" \
             "/etc/systemd/system/${SERVICE}-update.service" \
             "/etc/systemd/system/${SERVICE}-update.path" \
-            /usr/local/bin/fnbot /usr/local/bin/fnbot-update
+            /usr/local/bin/fnbot /usr/local/bin/fnbot-update /usr/local/bin/fnbot-art
       systemctl daemon-reload
       echo "Service removed. Data kept in /var/lib/fortnite_bot, config in /etc/fortnite_bot."
       ;;
-  *) echo "usage: fnbot {start|stop|restart|status|logs|errors|test|update|version|config|uninstall}" ;;
+  *) echo "usage: fnbot {start|stop|restart|status|logs|errors|test|update|art [--force]|version|config|uninstall}" ;;
 esac
 CLI_EOF
 chmod 0755 /usr/local/bin/fnbot
@@ -516,28 +521,38 @@ rm -f "$SHA_TMP"
 # Never fatal. Re-extracts only when the zip changes, and never overwrites
 # a PNG the admin replaced by hand (tracked in .art_manifest).
 # --------------------------------------------------------------------------
+cat > /usr/local/bin/fnbot-art <<'ART_SH_EOF'
+#!/usr/bin/env bash
+# Download ART_URL (a .zip of PNGs) and unpack it into ART_DIR.
+# Layout: <name>.png at the root, rewards/, weekly/, zones/ sub-folders
+# (an extra top folder such as art/ is stripped). Never fatal. Re-extracts
+# only when the zip changed; PNGs replaced by hand are kept (.art_manifest).
+set -uo pipefail
+CONF_FILE="/etc/fortnite_bot/bot.env"
+ok()   { printf '\033[32m%s\033[0m\n' "$*"; }
+warn() { printf '\033[33m%s\033[0m\n' "$*"; }
 conf_get() { grep -m1 "^$1=" "$CONF_FILE" 2>/dev/null | cut -d'"' -f2; }
-fetch_art() {
-    local url dir tmp rc=0
-    url="$(conf_get ART_URL)"
-    dir="$(conf_get ART_DIR)"; dir="${dir:-$APP_DIR/art}"
-    if [[ -z "$url" ]]; then
-        c_warn "ℹ️  ART_URL is empty — skipping the art pack."; return 0
-    fi
-    [[ "$url" =~ ^https?:// ]] || { c_warn "⚠️  ART_URL is not an http(s) URL — skipped."; return 0; }
-    install -d -m 0755 "$dir" "$dir/rewards" "$dir/weekly"
-    tmp="$(mktemp)"
-    local proxy=()
-    if [[ -n "${PROXY_URL:-}" ]]; then proxy=(--proxy "$PROXY_URL"); fi
-    if ! curl -fsSL --max-time 120 --retry 2 "${proxy[@]}" "$url" -o "$tmp" 2>/dev/null; then
-        rm -f "$tmp"
-        c_warn "⚠️  Could not download the art pack ($url) — using drawn scenes."
-        return 0
-    fi
-    python3 - "$tmp" "$dir" <<'ART_PY_EOF' || rc=$?
-import hashlib, json, os, sys, zipfile
+[[ "${1:-}" == "--force" ]] && FORCE=1 || FORCE=0
+url="$(conf_get ART_URL)"
+dir="$(conf_get ART_DIR)"; dir="${dir:-/opt/fortnite_bot/art}"
+proxy_url="$(conf_get PROXY_URL)"
+if [[ -z "$url" ]]; then warn "ℹ️  ART_URL is empty — skipping the art pack."; exit 0; fi
+[[ "$url" =~ ^https?:// ]] || { warn "⚠️  ART_URL is not an http(s) URL — skipped."; exit 0; }
+install -d -m 0755 "$dir" "$dir/rewards" "$dir/weekly" "$dir/zones"
+tmp="$(mktemp)"; trap 'rm -f "$tmp"' EXIT
+proxy=(); [[ -n "$proxy_url" ]] && proxy=(--proxy "$proxy_url")
+code="$(curl -sSL --max-time 180 --retry 2 "${proxy[@]}" -w '%{http_code}' -o "$tmp" "$url" 2>/dev/null || true)"
+if [[ "$code" != "200" ]]; then
+    warn "⚠️  Could not download the art pack (HTTP ${code:-error}): $url"
+    warn "    Upload art.zip to the latest GitHub release, or fix ART_URL (fnbot config)."
+    exit 0
+fi
+python3 - "$tmp" "$dir" "$FORCE" > "$tmp.out" 2>&1 <<'ART_PY_EOF'
+import hashlib, json, os, re, sys, zipfile
 zpath, root = sys.argv[1], os.path.realpath(sys.argv[2])
+force = len(sys.argv) > 3 and sys.argv[3] == "1"
 MAX_FILE, MAX_TOTAL = 8 << 20, 150 << 20
+SUBDIRS = ("rewards", "weekly", "zones")
 man_path = os.path.join(root, ".art_manifest")
 def sha(b): return hashlib.sha256(b).hexdigest()
 try:
@@ -545,7 +560,7 @@ try:
 except Exception:
     man = {}
 with open(zpath, "rb") as f: zsum = sha(f.read())
-if man.get("_zip") == zsum:
+if man.get("_zip") == zsum and not force:
     print("ART:SAME"); sys.exit(0)
 try:
     z = zipfile.ZipFile(zpath)
@@ -557,24 +572,24 @@ infos = [i for i in z.infolist() if not i.is_dir()
 names = [i.filename.replace("\\", "/") for i in infos]
 # Strip one common top folder (art.zip may contain art/...).
 tops = {n.split("/", 1)[0] for n in names}
-strip = len(tops) == 1 and all("/" in n for n in names) and tops.pop().lower() not in ("rewards", "weekly")
-new_man, added, kept, total = {"_zip": zsum}, 0, 0, 0
+strip = len(tops) == 1 and all("/" in n for n in names) and tops.pop().lower() not in SUBDIRS
+new_man, added, kept, total, skipped = {"_zip": zsum}, 0, 0, 0, 0
 for info, name in zip(infos, names):
     rel = name.split("/", 1)[1] if strip else name
     parts = rel.split("/")
     if (len(parts) > 2 or any(p in ("", ".", "..") for p in parts)
-            or (len(parts) == 2 and parts[0].lower() not in ("rewards", "weekly"))):
-        continue
-    rel = "/".join(p.lower() for p in parts)
+            or (len(parts) == 2 and parts[0].lower() not in SUBDIRS)):
+        skipped += 1; continue
+    rel = "/".join(re.sub(r"[\s\-]+", "_", p.strip().lower()) for p in parts)
     if info.file_size > MAX_FILE or total + info.file_size > MAX_TOTAL:
-        continue
+        skipped += 1; continue
     data = z.read(info)
     if not data.startswith(b"\x89PNG\r\n\x1a\n"):
-        continue
+        skipped += 1; continue
     total += len(data)
     dest = os.path.realpath(os.path.join(root, rel))
     if not dest.startswith(root + os.sep):
-        continue
+        skipped += 1; continue
     new_sum = sha(data)
     if os.path.exists(dest):
         with open(dest, "rb") as f: cur = sha(f.read())
@@ -587,32 +602,26 @@ for info, name in zip(infos, names):
     new_man[rel] = new_sum; added += 1
 with open(man_path + ".tmp", "w") as f: json.dump(new_man, f, indent=0)
 os.chmod(man_path + ".tmp", 0o644); os.replace(man_path + ".tmp", man_path)
-print(f"ART:OK {added} {kept}")
+print(f"ART:OK {added} {kept} {skipped}")
 ART_PY_EOF
-    rm -f "$tmp"
-    chown -R root:root "$dir" 2>/dev/null || true
-    case "$rc" in
-        0) ;;
-        3) c_warn "⚠️  ART_URL did not return a valid .zip — art pack skipped." ;;
-        *) c_warn "⚠️  Art pack could not be unpacked — using drawn scenes." ;;
-    esac
-    return 0
-}
+out="$(cat "$tmp.out" 2>/dev/null)"; rm -f "$tmp.out"
+chown -R root:root "$dir" 2>/dev/null || true
+case "$out" in
+    ART:SAME*)   ok "✅ Art pack already up to date." ;;
+    ART:OK*)     read -r _ n k skipped <<< "$out"
+                 ok "✅ Art pack installed: ${n} image(s) into $dir"
+                 [[ "${k:-0}" != "0" ]] && warn "ℹ️  Kept ${k} image(s) you replaced yourself."
+                 [[ "${skipped:-0}" != "0" ]] && warn "ℹ️  Skipped ${skipped} file(s) (not PNG / bad path / too big)."
+                 ;;
+    ART:BADZIP*) warn "⚠️  ART_URL did not return a valid .zip — art pack skipped." ;;
+    *)           warn "⚠️  Art pack could not be unpacked — using drawn icons."; echo "$out" | tail -n 3 ;;
+esac
+exit 0
+ART_SH_EOF
+chmod 0755 /usr/local/bin/fnbot-art
+
 echo "Fetching art pack…"
-ART_OUT="$(fetch_art 2>&1)" || true
-while IFS= read -r line; do
-    case "$line" in
-        "ART:SAME") c_ok "✅ Art pack already up to date." ;;
-        ART:OK*)    read -r _ ART_N ART_K <<< "$line"
-                    c_ok "✅ Art pack installed: ${ART_N} image(s)."
-                    if [[ "${ART_K:-0}" != "0" ]]; then
-                        c_warn "ℹ️  Kept ${ART_K} image(s) you replaced yourself."
-                    fi ;;
-        ART:BADZIP) ;;
-        "") ;;
-        *) echo "$line" ;;
-    esac
-done <<< "$ART_OUT"
+/usr/local/bin/fnbot-art || true
 
 echo "[7/7] Starting service…"
 
