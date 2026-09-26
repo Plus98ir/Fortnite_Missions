@@ -565,6 +565,40 @@ MAX_FILE, MAX_TOTAL = 8 << 20, 150 << 20
 SUBDIRS = ("rewards", "weekly", "zones", "zone", "scenes", "missions")
 man_path = os.path.join(root, ".art_manifest")
 def sha(b): return hashlib.sha256(b).hexdigest()
+# Checksums of the first published pack: those files count as ours even on
+# servers whose manifest no longer lists them.
+LEGACY = {
+    "rewards/defender.png": "f0a68b508535c9285fa46072c401a25442a9c688c7b5465267a0ce87c8036b37",
+    "rewards/gold.png": "37fcc4bb1d77b3bcb1a35245200ba268931d3be8fde087b7f4626f3194ea6cd0",
+    "rewards/hero.png": "0e98129eef47a9f401469d289d1de5c9bcf8530e27d4867d9dcd98d80ce1cbcf",
+    "rewards/material.png": "bafdc84b119e9ce49a2ef744d6a39f58324b066a3ba24b50498bd4a83f691275",
+    "rewards/perk.png": "daed22ea36d0bad09291f556561db86ddd49b2f2673f97fd71940da47453f463",
+    "rewards/schematic.png": "6ffc7f6efb0f90211581c0f4833c2b1372177291c19045d7fa7380fc70074e58",
+    "rewards/survivor.png": "0007cba1a1909b1cbc080615f5bc4d4d9e33889852b8aef056b28b07db2e75cc",
+    "rewards/trap.png": "7c9ecbd7449425c72d40cb193eb6282da17752aae991fef3f80812ad264d1e6e",
+    "rewards/vbucks.png": "44e3c3b36235c731b199f469c8c610c197087af410e044bd0a4e0dde794d358a",
+    "rewards/xp.png": "f5cef127ff6218234bd1e3288941183923db4564f97078bdcf6cccc300eaf4f2",
+    "weekly/core.png": "0c642e943ea53cbfc9ac6b42084491e7044cfdfdfd514248d35bf19226a0ca24",
+    "weekly/hero.png": "3f997aaea24f08d6766c8787f40d1105f735e1382659bcfc67a72854c9c6d55b",
+    "weekly/survivor.png": "c4fe9a1bd0ff73397dedb5002f1427e6626fa6dec81130fea340006f1ffa7d8d",
+    "weekly/trap.png": "b8d169aeea65bfa6cbc5dde0c6aa69edc861e794988c52c9e13325846dd2f30c",
+    "weekly/weapon.png": "27eb2b8df07ec7b2c9660bf5d9da4db51955300757c8e2828e352415c7e021e5",
+    "zones/canny.png": "6b174c7e0dd0a5bbe2877c62d16f4057bb51375355bbd0aeb12c6407529eb0ed",
+    "zones/plankerton.png": "27f949f4508162808d5b76b2416275f4dfe7ce8782502403be9208c2ec67edc3",
+    "zones/stonewood.png": "7454bfd34634eafd764689ca594c9cf6d45c75ae549a9525051f2e6915f2076f",
+    "zones/twine.png": "152690a24dc35f997b77be493ee72900a050dac96b236dd82ef4b3cb0f0fd56a",
+    "zones/ventures.png": "1407a3fde4735225dae9ce2aba442e703fb287ffad6dbf1045ce2f4c138ced68",
+    "bomb.png": "1b7af3daf228db0aef1556078dd3dac534b33a5175e8ac75f60f91eec94cf9d2",
+    "data.png": "f318ecde22ac0cc5324ae07aec5c461e4c6508f34af10d99f31835936dad24c8",
+    "eliminate.png": "2353c89b595bc45fe0e42517e96dafed23402383fdef2fa4579dc70b6820fc7a",
+    "encampments.png": "477701c7fadf9372eba45788d8cffe0551618c75d11a461ee53fbdc3d6acf873",
+    "evacuate.png": "11bce19f9692ebd3e27e6d2c842b7c6b4e80a8fcd274ba2f47b66f9bb3896a6f",
+    "lightning.png": "8ad9168b866d071a3b29cc1a0a4242453d6be5d2d92ab9c6fb85de9c195cff8f",
+    "radar.png": "e2205ac6dd04b9a99137f5a6350b14a10248034e4553555758203672d88bd34b",
+    "repair.png": "e46a66cb87dc8a98f281fc8d6ad6edd45843f36edb2f94d52fe7d036f5c40f25",
+    "rescue.png": "1f33f45ea939bea2cac802fc29379cdb06e0d85df3865ea4b259a9fd659d8d94",
+    "storm.png": "e1092644fdeebff7ceb020c9afa07c5e0e850dd51bf8506074bb9681e1e06065",
+}
 try:
     with open(man_path) as f: man = json.load(f)
 except Exception:
@@ -584,6 +618,7 @@ names = [i.filename.replace("\\", "/") for i in infos]
 tops = {n.split("/", 1)[0] for n in names}
 strip = len(tops) == 1 and all("/" in n for n in names) and tops.pop().lower() not in SUBDIRS
 new_man, added, kept, total, skipped = {"_zip": zsum}, 0, 0, 0, 0
+seen = set()
 for info, name in zip(infos, names):
     rel = name.split("/", 1)[1] if strip else name
     parts = rel.split("/")
@@ -602,27 +637,42 @@ for info, name in zip(infos, names):
     if not dest.startswith(root + os.sep):
         skipped += 1; continue
     new_sum = sha(data)
+    seen.add(rel)
     if os.path.exists(dest):
         with open(dest, "rb") as f: cur = sha(f.read())
-        if cur != man.get(rel) and cur != new_sum:
+        if cur not in (man.get(rel), LEGACY.get(rel), new_sum):
             kept += 1; continue          # admin's own file — leave it
     os.makedirs(os.path.dirname(dest), mode=0o755, exist_ok=True)
     tmp = dest + ".tmp"
     with open(tmp, "wb") as f: f.write(data)
     os.chmod(tmp, 0o644); os.replace(tmp, dest)
     new_man[rel] = new_sum; added += 1
+# Remove images an older zip installed that this zip no longer has (they
+# would shadow the new names, e.g. an old lightning.png over scenes/van.png).
+# Files the admin changed since are kept.
+removed = 0
+for rel, old_sum in list(LEGACY.items()) + list(man.items()):
+    if rel == "_zip" or rel in seen:
+        continue
+    dest = os.path.realpath(os.path.join(root, rel))
+    if not dest.startswith(root + os.sep) or not os.path.isfile(dest):
+        continue
+    with open(dest, "rb") as f: cur = sha(f.read())
+    if cur == old_sum:
+        os.remove(dest); removed += 1
 with open(man_path + ".tmp", "w") as f: json.dump(new_man, f, indent=0)
 os.chmod(man_path + ".tmp", 0o644); os.replace(man_path + ".tmp", man_path)
-print(f"ART:OK {added} {kept} {skipped}")
+print(f"ART:OK {added} {kept} {skipped} {removed}")
 ART_PY_EOF
 out="$(cat "$tmp.out" 2>/dev/null)"; rm -f "$tmp.out"
 chown -R root:root "$dir" 2>/dev/null || true
 case "$out" in
     ART:SAME*)   ok "✅ Art pack already up to date." ;;
-    ART:OK*)     read -r _ n k skipped <<< "$out"
+    ART:OK*)     read -r _ n k skipped removed <<< "$out"
                  ok "✅ Art pack installed: ${n} image(s) into $dir"
                  [[ "${k:-0}" != "0" ]] && warn "ℹ️  Kept ${k} image(s) you replaced yourself."
                  [[ "${skipped:-0}" != "0" ]] && warn "ℹ️  Skipped ${skipped} file(s) (not PNG / bad path / too big)."
+                 [[ "${removed:-0}" != "0" ]] && ok "🧹 Removed ${removed} old image(s) no longer in the art pack."
                  ;;
     ART:BADZIP*) warn "⚠️  ART_URL did not return a valid .zip — art pack skipped." ;;
     *)           warn "⚠️  Art pack could not be unpacked — using drawn icons."; echo "$out" | tail -n 3 ;;
