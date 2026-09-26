@@ -188,12 +188,13 @@ REQUEST_TIMEOUT="15"
 BROADCAST_DELAY="0.06"
 LOG_LEVEL="INFO"
 DEFAULT_LANG="en"
-# Missions drawn on one image card (image mode). Higher means a bigger file.
+# Missions per picture in image mode; longer lists are sent as an album.
 IMAGE_MAX_CARDS="20"
 # Drop your own square PNGs in ART_DIR to replace the drawn icons. Several
 # names are tried per slot (first hit wins), e.g. bomb|deliver|dtb:
+#   page     : background   (full-page backdrop for every picture)
 #   missions : evacuate repair lightning data balloon radar storm trap_storm
-#              bomb encampments eliminate rescue refuel default
+#              bomb encampments eliminate rescue refuel|refuel_homebase default
 #   rewards/ : vbucks reperk perkup ampup fireup frostup perk
 #              lightning_bottle eye_storm storm_shard pure_drop flux manual
 #              designs material venture_xp survivor_xp schematic_xp hero_xp xp
