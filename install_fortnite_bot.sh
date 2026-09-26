@@ -1215,8 +1215,60 @@ def is_top_reward(r: dict) -> bool:
     return looks_item and bool(LEGENDARY_RE.search(text)) and not re.search(r"\bxp\b", text, re.I)
 
 
+TOP_PER_ZONE = int(os.environ.get("TOP_PER_ZONE", "5"))
+_TOP_SCORES = (
+    (re.compile(r"v[\s_\-]?bucks|mtxswap", re.I), 10000),
+    (re.compile(r"x-?ray|xrayllama", re.I), 9000),
+    (re.compile(r"mythic", re.I), 8000),
+    (re.compile(r"storm shard|reagent_c_t04", re.I), 3500),
+    (re.compile(r"eye of the storm|reagent_c_t03", re.I), 3400),
+    (re.compile(r"lightning in a bottle|reagent_c_t02", re.I), 3300),
+    (re.compile(r"pure drop|reagent_c_t01", re.I), 3000),
+    (re.compile(r"re-?perk|alteration_generic", re.I), 4000),
+)
+_LEG_ITEM = re.compile(r"(\blead\b|manager|hero:|\bhid_|defender|\bdid_)", re.I)
+_ANY_ITEM = re.compile(r"worker:|survivor(?!\s*xp)|schematic:|\bsid_", re.I)
+
+
+def reward_score(r: dict) -> int:
+    """Value of one alert reward: V-Bucks > X-Ray > Mythic > Legendary
+    lead/hero/defender > Legendary survivor/schematic > Legendary Perk-Up
+    / Flux > RE-PERK > evo mats > Epic items. Quantity breaks ties."""
+    text = f"{r.get('raw', '')} | {r.get('item', '')}"
+    qty = int(r.get("qty") or 1)
+    for pattern, base in _TOP_SCORES[:3]:
+        if pattern.search(text):
+            return base + min(qty, 999)
+    legendary = bool(LEGENDARY_RE.search(text))
+    if legendary and _LEG_ITEM.search(text):
+        return 7000
+    if legendary and _ANY_ITEM.search(text):
+        return 6000
+    if re.search(r"perk-?up|alteration_upgrade", text, re.I) and legendary:
+        return 5000 + min(qty, 999)
+    if re.search(r"flux|evolverarity", text, re.I) and legendary:
+        return 4800 + min(qty, 99)
+    for pattern, base in _TOP_SCORES[3:]:
+        if pattern.search(text):
+            return base + min(qty, 999)
+    if re.search(r"\bepic\b|(?:^|[_:])vr(?=[_\s|)]|$)", text, re.I) and \
+            (_LEG_ITEM.search(text) or _ANY_ITEM.search(text)):
+        return 2000
+    return 0
+
+
+def mission_score(m: dict) -> int:
+    scores = sorted((reward_score(r) for r in m.get("alert") or []), reverse=True)
+    return (scores[0] + sum(scores[1:]) // 100) if scores and scores[0] else 0
+
+
 def top_missions(missions: list[dict]) -> list[dict]:
-    return [m for m in missions if any(is_top_reward(r) for r in m.get("alert") or [])]
+    """The best TOP_PER_ZONE missions of every zone, highest value first."""
+    out: list[dict] = []
+    for _, group in group_by_zone([m for m in missions if mission_score(m) > 0]):
+        ranked = sorted(group, key=lambda m: (-mission_score(m), -m.get("power", 0)))
+        out += ranked[:max(1, TOP_PER_ZONE)]
+    return out
 
 
 def group_by_zone(missions: list[dict]) -> list[tuple[str, list[dict]]]:
@@ -1282,8 +1334,8 @@ TEXTS: dict[str, dict[str, str]] = {
         "btn_top": "🔥 Top Missions",
         "top_title": "🔥 <b>Top Missions</b>",
         "top_zone": "🔥 Top — {}",
-        "top_none": "❌ No notable missions today (V-Bucks, X-Ray tickets, Legendary/Mythic items, Legendary Perk-Up/Flux).",
-        "top_caption": "🔥 Top missions today — {} in {} zone(s)",
+        "top_none": "❌ No notable missions today.",
+        "top_caption": "🔥 Best missions of each zone today — {} in {} zone(s)",
         "finder_title": "🔎 <b>Reward Finder — all zones</b>",
         "finder_none": "❌ No mission in any zone has the rewards you picked today.",
         "finder_need": "🔎 Pick at least one reward in ⚙️ My Filters first — the finder then searches every mission in every zone (Stonewood → Twine Peaks and Ventures).",
@@ -1442,8 +1494,8 @@ TEXTS: dict[str, dict[str, str]] = {
         "btn_top": "🔥 ماموریت‌های برتر",
         "top_title": "🔥 <b>ماموریت‌های برتر امروز</b>",
         "top_zone": "🔥 Top — {}",
-        "top_none": "❌ امروز ماموریت برجسته‌ای نیست (ویباکس، تیکت X-Ray، آیتم لجندری/میتیک، پرک‌آپ/فلاکس لجندری).",
-        "top_caption": "🔥 ماموریت‌های برتر امروز — {} ماموریت در {} زون",
+        "top_none": "❌ امروز ماموریت برجسته‌ای نیست.",
+        "top_caption": "🔥 بهترین ماموریت‌های هر زون امروز — {} ماموریت در {} زون",
         "finder_title": "🔎 <b>جستجوی جایزه — همه زون‌ها</b>",
         "finder_none": "❌ امروز در هیچ زونی ماموریتی با جوایز انتخابی تو نیست.",
         "finder_need": "🔎 اول در ⚙️ فیلترهای من حداقل یک جایزه انتخاب کن؛ بعد این بخش همه ماموریت‌های همه زون‌ها (استون‌وود تا توئین پیکس و ونچر) را می‌گردد.",
@@ -1936,7 +1988,9 @@ def _reward_lines(mission: dict, lang: str) -> list[str]:
         lines.append(f"   {reward_emoji(r)} {E(r['item'])} <code>x{r['qty']:,}</code>")
     basic = mission.get("basic") or []
     if basic:
-        joined = " \u00b7 ".join(E(r["item"]) for r in basic[:5])
+        joined = " \u00b7 ".join(
+            E(r["item"]) + (f" x{r['qty']:,}" if int(r.get("qty") or 1) > 1 else "")
+            for r in basic[:6])
         lines.append(f"   \U0001f4e6 <i>{joined}</i>")
     if not lines:
         lines.append(f"   \u2014 {E(t(lang, 'none'))}")
@@ -4441,6 +4495,9 @@ def _layout_row(draw, m, x0, limit, fonts):
             if not label or label in seen:
                 continue
             seen.add(label)
+            qty = int(r.get("qty") or 1)
+            if qty > 1:
+                label = f"{qty:,} {label}"
             need = 22 + draw.textlength(label, font=f_basic) + 16
             if cx + need > limit and cx > x0:
                 cx, y = x0, y + 24
@@ -4696,6 +4753,11 @@ ART_DIR="/opt/fortnite_bot/art"
 # Files you replaced yourself are never overwritten. "" = disabled.
 ART_URL="${ART_URL_DEFAULT}"
 
+# 🔥 Top Missions: best N missions of every zone, ranked by value
+# (V-Bucks > X-Ray > Mythic > Legendary lead/hero/defender > Legendary
+# survivor/schematic > Legendary Perk-Up/Flux > RE-PERK > evo mats).
+TOP_PER_ZONE="5"
+
 # Second weekly-reward source (optional). When the two disagree the admin is
 # asked to confirm; /setweekly pins the right one by hand.
 WEEKLY_URL2=""
@@ -4721,6 +4783,7 @@ ensure_conf() {
 ensure_conf UPDATE_URL "$UPDATE_URL"
 ensure_conf IMAGE_MAX_CARDS "10"
 ensure_conf WEEKLY_URL2 ""
+ensure_conf TOP_PER_ZONE "5"
 ensure_conf ART_DIR "$APP_DIR/art"
 ensure_conf ART_URL "$ART_URL_DEFAULT"
 # BOT_VERSION always reflects the installer that ran last.

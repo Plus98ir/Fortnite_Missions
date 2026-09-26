@@ -210,6 +210,11 @@ ART_DIR="/opt/fortnite_bot/art"
 # Files you replaced yourself are never overwritten. "" = disabled.
 ART_URL="${ART_URL_DEFAULT}"
 
+# 🔥 Top Missions: best N missions of every zone, ranked by value
+# (V-Bucks > X-Ray > Mythic > Legendary lead/hero/defender > Legendary
+# survivor/schematic > Legendary Perk-Up/Flux > RE-PERK > evo mats).
+TOP_PER_ZONE="5"
+
 # Second weekly-reward source (optional). When the two disagree the admin is
 # asked to confirm; /setweekly pins the right one by hand.
 WEEKLY_URL2=""
@@ -235,6 +240,7 @@ ensure_conf() {
 ensure_conf UPDATE_URL "$UPDATE_URL"
 ensure_conf IMAGE_MAX_CARDS "10"
 ensure_conf WEEKLY_URL2 ""
+ensure_conf TOP_PER_ZONE "5"
 ensure_conf ART_DIR "$APP_DIR/art"
 ensure_conf ART_URL "$ART_URL_DEFAULT"
 # BOT_VERSION always reflects the installer that ran last.
