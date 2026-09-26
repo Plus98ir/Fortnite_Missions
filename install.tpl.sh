@@ -194,14 +194,14 @@ IMAGE_MAX_CARDS="10"
 # names are tried per slot (first hit wins), e.g. bomb|deliver|dtb:
 #   page     : background   (full-page backdrop for every picture)
 #   missions (root or scenes/): evacuate repair|repair_shelter lightning|van
-#              data balloon radar storm|atlas atlas_1..atlas_4 (Category 1-4)
+#              balloon (= Retrieve the Data) radar storm|atlas atlas_1..atlas_4 (Category 1-4)
 #              survive trap_storm resupply rocket
 #              bomb encampments eliminate rescue refuel|refuel_homebase
 #              titan|hunt_the_titan   (missing/empty file = drawn icon)
 #   rewards/ : vbucks reperk perkup (+ uncommon_/rare_/epic_/legendary_perkup)
 #              flux (+ rare_/epic_/legendary_flux) ampup fireup frostup perk
 #              lightning_bottle eye_storm storm_shard pure_drop flux manual
-#              designs|weapon_designs trap_designs material venture_xp survivor_xp schematic_xp hero_xp xp
+#              designs|weapon_designs trap_designs material venture_xp survivor_xp schematic_xp|schematic hero_xp xp
 #              candy gold ticket lead survivor defender hero trap schematic
 #   weekly/  : weapon|schematic hero survivor trap defender core|perk
 #   zones/ (or zone/): stonewood plankerton canny_valley twine_peaks ventures

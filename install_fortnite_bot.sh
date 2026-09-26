@@ -4159,7 +4159,7 @@ SCENE_SLUGS = (
     (re.compile(r"resupply|supply drop", re.I), ["resupply"]),
     (re.compile(r"rocket", re.I), ["rocket"]),
     (re.compile(r"ride the lightning", re.I), ["lightning", "van", "rtl"]),
-    (re.compile(r"retrieve|retrive|data", re.I), ["data", "retrieve"]),
+    (re.compile(r"retrieve|retrive|data", re.I), ["balloon", "data", "retrieve"]),  # game icon = balloon
     (re.compile(r"balloon|launch", re.I), ["balloon", "data"]),
     (re.compile(r"radar", re.I), ["radar"]),
     (re.compile(r"encampment", re.I), ["encampments", "encampment", "camps"]),
@@ -4304,7 +4304,7 @@ REWARD_KINDS = (
     (re.compile(r"designs|reagent_weapons", re.I), ["weapon_designs", "designs", "material"], ic_book, "schem"),
     (re.compile(r"venture\s*xp|phoenixxp", re.I), ["venture_xp", "xp"], ic_xp, "vxp"),
     (re.compile(r"survivor\s*xp|personnelxp", re.I), ["survivor_xp", "xp"], ic_xp, "sxp"),
-    (re.compile(r"schematic\s*xp|schematicxp", re.I), ["schematic_xp", "xp"], ic_xp, "schxp"),
+    (re.compile(r"schematic\s*xp|schematicxp", re.I), ["schematic_xp", "schematic", "xp"], ic_xp, "schxp"),
     (re.compile(r"hero\s*xp|heroxp", re.I), ["hero_xp", "xp"], ic_xp, "hxp"),
     (re.compile(r"\bxp\b|experience", re.I), ["xp"], ic_xp, "xp"),
     (re.compile(r"candy", re.I), ["candy", "gold"], ic_candy, "candy"),
@@ -4784,14 +4784,14 @@ IMAGE_MAX_CARDS="10"
 # names are tried per slot (first hit wins), e.g. bomb|deliver|dtb:
 #   page     : background   (full-page backdrop for every picture)
 #   missions (root or scenes/): evacuate repair|repair_shelter lightning|van
-#              data balloon radar storm|atlas atlas_1..atlas_4 (Category 1-4)
+#              balloon (= Retrieve the Data) radar storm|atlas atlas_1..atlas_4 (Category 1-4)
 #              survive trap_storm resupply rocket
 #              bomb encampments eliminate rescue refuel|refuel_homebase
 #              titan|hunt_the_titan   (missing/empty file = drawn icon)
 #   rewards/ : vbucks reperk perkup (+ uncommon_/rare_/epic_/legendary_perkup)
 #              flux (+ rare_/epic_/legendary_flux) ampup fireup frostup perk
 #              lightning_bottle eye_storm storm_shard pure_drop flux manual
-#              designs|weapon_designs trap_designs material venture_xp survivor_xp schematic_xp hero_xp xp
+#              designs|weapon_designs trap_designs material venture_xp survivor_xp schematic_xp|schematic hero_xp xp
 #              candy gold ticket lead survivor defender hero trap schematic
 #   weekly/  : weapon|schematic hero survivor trap defender core|perk
 #   zones/ (or zone/): stonewood plankerton canny_valley twine_peaks ventures
