@@ -10,8 +10,17 @@
 | --- | --- |
 
 A Telegram bot for **Fortnite: Save the World** that tracks V-Bucks missions,
-Power 160 missions, Ventures 140 missions, the weekly reward and the season
-countdowns — in English and Persian.
+Power 160 missions, Ventures 140 missions, the best missions of the day, the
+weekly reward and the season countdowns. It answers in English or Persian, as
+text or as ready-made pictures.
+
+> [!IMPORTANT]
+> **Terms of use:** this is a free, open-source bot for **personal use only**.
+> It is **not for sale** and must not be sold or used commercially.
+> Fortnite, its names, icons and artwork are the property of **Epic Games, Inc.**
+> This project is not affiliated with or endorsed by Epic Games.
+> **You install and use it at your own risk and responsibility.**
+> The installer asks you to accept these terms before it installs anything.
 
 ---
 
@@ -22,12 +31,15 @@ countdowns — in English and Persian.
 | 💎 **V-Bucks missions** | Every daily mission that pays V-Bucks, with the amount and power level. |
 | ⚡ **Power 160 missions** | Endgame missions with full alert and basic reward lists. |
 | 🌴 **Ventures 140 missions** | Ventures-only missions at power 140. **Dungeons are excluded.** |
-| 🛠 **Weekly reward** | Which Supercharger or Core RE-PERK this week's reset grants. |
+| 🔥 **Top Missions** | The best missions of every zone, ranked by value: V-Bucks, X-Ray, Mythic and Legendary items, Legendary Perk-Up and Flux. |
+| 🔎 **Reward Finder** | Search all zones for the reward types, rarities and zones you pick. |
+| 🖼 **Image mode** | Lists as clean pictures with mission and reward icons, 5–6 missions per picture, sent as an album. Or switch to plain text. |
+| 🛠 **Weekly reward** | Which Supercharger or Core RE-PERK this week's reset grants, with an admin override if the source is late. |
 | ⏱ **Season timers** | Battle Pass and Ventures countdowns with a progress bar. |
-| ⚙️ **Personal filters** | Each user picks their own zones, reward types and minimum V-Bucks. |
-| 🔔 **Automatic alerts** | Daily push 1 minute after the reset, weekly push 2 minutes after it. |
+| 🔔 **Automatic alerts** | Daily push 1 minute after the reset, weekly push 2 minutes after it. Every user can turn them off. |
 | 🌐 **Bilingual** | Full English and Persian interface, switchable per user. |
-| 👑 **Admin panel** | Stats, broadcast, ban/unban, CSV export and import, cache refresh. |
+| 👑 **Admin panel** | Stats, broadcast, ban/unban, CSV export and import, cache refresh, weekly override, update check. |
+| 🎨 **Art pack** | Every icon and the background can be replaced with your own PNGs. |
 
 ---
 
@@ -55,16 +67,17 @@ On a Debian or Ubuntu server, as root:
 bash <(curl -fsSL https://github.com/Plus98ir/Fortnite_Missions/releases/latest/download/install_fortnite_bot.sh)
 ```
 
-The installer asks for your bot token, your admin chat ID and (optionally) a
-proxy, then does everything else: system packages, a dedicated service
-account, a Python virtualenv, the configuration file and a sandboxed systemd
-service.
+The installer first shows the **terms of use** and continues only if you type
+`yes`. It then asks for your bot token, your admin chat ID and (optionally) a
+proxy, and does everything else: system packages, a dedicated service account,
+a Python virtualenv, the configuration file, the art pack and a sandboxed
+systemd service.
 
 Before starting the service it tests whether Telegram is reachable, so you
 find out immediately whether the problem is your token or your network.
 
-**Re-run the same command to upgrade.** Your configuration and your user list
-are preserved — just press `Enter` at the first prompt.
+**To upgrade**, run `fnbot update` (or press **Update** in the admin panel).
+Your configuration, users and your own art are kept.
 
 ---
 
@@ -73,14 +86,16 @@ are preserved — just press `Enter` at the first prompt.
 A helper command is installed as `fnbot`:
 
 ```bash
-fnbot status      # is it running?
-fnbot logs        # follow the live log
-fnbot errors      # only the error lines
-fnbot test        # check Telegram connectivity, direct and via proxy
-fnbot config      # edit the configuration, then restart automatically
-fnbot update
+fnbot status        # is it running?
+fnbot logs          # follow the live log
+fnbot errors        # only the error lines
+fnbot test          # check Telegram connectivity, direct and via proxy
+fnbot config        # edit the configuration, then restart automatically
+fnbot update        # install the latest release, keep config and users
+fnbot art [--force] # re-download the art pack
+fnbot version
 fnbot restart
-fnbot uninstall   # remove the service (config and users are kept)
+fnbot uninstall     # remove the service (config and users are kept)
 ```
 
 ---
@@ -97,6 +112,12 @@ Everything lives in `/etc/fortnite_bot/bot.env` (mode `0640`). Edit it with
 | `PROXY_URL` | empty | e.g. `socks5://user:pass@127.0.0.1:1080`. Leave empty for a direct connection. |
 | `MAX_USERS` | `200` | Capacity limit. Raise it if you host many users. |
 | `DEFAULT_LANG` | `en` | `en` or `fa`. |
+| `IMAGE_MIN_CARDS` | `5` | Fewest missions per picture; lists are spread evenly (5 + 5, never 4 + 1). |
+| `IMAGE_MAX_CARDS` | `10` | Soft cap of missions per picture. |
+| `TOP_PER_ZONE` | `5` | How many missions per zone 🔥 Top Missions shows. |
+| `ART_DIR` | `/opt/fortnite_bot/art` | Folder with your own icons and background. |
+| `ART_URL` | release `art.zip` | Art pack downloaded on install/update. `""` = off. |
+| `WEEKLY_URL2` | empty | Optional second source for the weekly reward. |
 | `DAILY_RESET_UTC` | `00:01` | Daily alert time (1 minute after the shop reset). |
 | `WEEKLY_RESET_UTC` | `00:02` | Weekly alert time (2 minutes after the reset). |
 | `WEEKLY_RESET_WEEKDAY` | `3` | 0 = Monday … 3 = Thursday. |
@@ -111,17 +132,31 @@ Everything lives in `/etc/fortnite_bot/bot.env` (mode `0640`). Edit it with
 
 ---
 
+## 🎨 Art pack
+
+Pictures use the PNGs in `ART_DIR`; anything missing is drawn by the bot.
+Layout: `background.png` at the top, mission icons in `scenes/`, reward icons
+in `rewards/`, weekly rewards in `weekly/`, zone icons in `zone/`. Names are
+matched loosely (`V-Bucks.png` = `v_bucks.png` = `vbucks.png`); the full list
+is in the comment above `ART_DIR` in `bot.env`.
+
+- `fnbot art --force` re-downloads `ART_URL` and unpacks it.
+- PNGs you replaced by hand are never overwritten.
+- Images an older pack installed and the new pack dropped are removed.
+
+> The default icons depict Fortnite items and are the property of Epic Games.
+> They are included only so the bot is usable for personal play.
+
+---
+
 ## ⚙️ User filters
 
-Each user opens **⚙️ My Filters** (or `/filters`) and picks:
-
-- **Zones** — Stonewood, Plankerton, Canny Valley, Twine Peaks, Other.
-- **Rewards** — V-Bucks, Survivor, Hero, Schematic, Evo Mat, Perk-Up.
-- **Minimum V-Bucks** — 0, 50 or 100.
-
-Selecting nothing shows everything. Filters apply to the daily alert too, so
-every user gets a personalised push. The Ventures list ignores the zone
-filter, because Ventures has its own map.
+Each user opens **⚙️ My Filters** (or `/filters`) and picks zones and reward
+types (V-Bucks, Survivor, Hero, Defender, Schematic, Trap, Evo Mat, Perk-Up,
+Gold, XP) plus a rarity (Legendary, Epic); rarity and type must both match
+the same reward. The filters are used by
+**🔎 Reward Finder**; the normal lists and the daily alerts always show
+everything.
 
 ---
 
@@ -139,6 +174,8 @@ Press **👑 Admin**, or use the commands directly:
 | `/export` | Download a CSV of all users and their settings. |
 | `/import` | Restore users — just send the CSV or a `users.json` back to the bot. |
 | `/refresh` | Clear the cache and re-fetch on the next request. |
+| `/setweekly <weapon\|hero\|survivor\|trap\|defender\|core\|auto>` | Pin this week's reward by hand when the source is wrong. |
+| `/update` | Check for a new release and install it. |
 
 Import **merges**: existing users are updated, new ones added, nobody is ever
 deleted.
@@ -152,13 +189,12 @@ reset** rather than for a fixed number of minutes:
 
 | Data | Valid until | Stored on disk |
 | --- | --- | --- |
-| Missions (V-Bucks / 160 / Ventures) | next 00:00 UTC | ✅ |
+| Missions, filtered lists, pictures | next 00:00 UTC | ✅ (missions) |
 | Weekly reward | next weekly reset | ✅ |
 | Season end date | next day | in memory |
 
 The first request of the day fetches; everyone after that is served instantly.
-The disk copy in `/var/lib/fortnite_bot/` survives restarts. If a fetch fails,
-the previous data is served instead of an error.
+If a fetch fails, the previous data is served instead of an error.
 
 ---
 
@@ -172,18 +208,7 @@ the previous data is served instead of an error.
   an empty capability set and a syscall filter.
 - All Telegram output is HTML-escaped, so scraped mission names can't break
   or inject into messages.
-- The user database is written atomically with mode `0600`.
-
-### If you fork this repo
-
-Add a `.gitignore` so you never commit live data:
-
-```gitignore
-bot.env
-users.json
-cache-*.json
-*.bad
-```
+- The art pack is unpacked safely: images only, no path escapes, size limits.
 
 ---
 
@@ -194,8 +219,7 @@ practice means a server inside Iran. Servers abroad should leave `PROXY_URL`
 empty.
 
 The proxy must be reachable **from the server itself**. `127.0.0.1` refers to
-that machine, not to your own computer — a common and confusing mistake. Check
-with:
+that machine, not to your own computer. Check with:
 
 ```bash
 ss -ltnp | grep <port>
@@ -209,17 +233,24 @@ fnbot test
 | Symptom | Cause and fix |
 | --- | --- |
 | `httpx.ConnectError: All connection attempts failed` | Telegram unreachable. Run `fnbot test`; if the direct connection works, clear `PROXY_URL`. |
-| `TypeError: Defaults.__init__() got an unexpected keyword argument` | An old build. Re-run the installer. |
+| Old icons still show after an update | Run `fnbot art --force`. |
 | Battle Pass timer shows an error | The live season lookup failed. Set `SEASON_END_UTC` in the config. |
-| Ventures list is empty | The upstream zone names changed. Adjust `VENTURE_RE` in `vbucks_scraper.py`. |
+| Weekly reward is wrong | The source is late. Use `/setweekly` to pin the right one. |
 | Service restarts in a loop | `fnbot errors` shows the real reason in the last few lines. |
 
 ---
 
-## 📎 Notes
+## ⚖️ Disclaimer
 
-- No server? You can try my instance: **@plus98vbucks_bot** — I can't promise
-  how long it stays up.
-- Data sources: [seebot.dev](https://seebot.dev),
-  [fortnitedb.com](https://fortnitedb.com), [fortnite.gg](https://fortnite.gg).
-- Not affiliated with Epic Games.
+- This bot is for **personal use** and is **not for sale**.
+- Fortnite and all related names, icons and artwork are trademarks and
+  property of **Epic Games, Inc.** This project is unofficial and is not
+  affiliated with, sponsored or endorsed by Epic Games.
+- Mission data comes from third-party community sites
+  ([seebot.dev](https://seebot.dev), [fortnitedb.com](https://fortnitedb.com),
+  [fortnite.gg](https://fortnite.gg)) and may be late or wrong.
+- The software is provided "as is", without warranty. **All responsibility for
+  installing and using it is yours.**
+
+No server? You can try my instance: **@plus98vbucks_bot** — I can't promise
+how long it stays up.
