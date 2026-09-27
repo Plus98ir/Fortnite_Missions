@@ -2258,20 +2258,19 @@ def _page_label(missions: list[dict], n: int, total: int) -> str:
 def render_pages(missions: list[dict], lang: str, kind: str, title: str,
                  label: str | None = None) -> list[tuple[bytes, str]]:
     """[(png, caption)] — one entry per picture, caption names zone + page."""
-    per = max(4, vimg.MAX_CARDS)
-    chunks = [missions[i:i + per] for i in range(0, len(missions), per)]
+    payloads = [{
+        "zone": m["zone"], "name": m["name"], "power": m["power"],
+        "biome": m["biome"], "rewards": image_rewards(m, kind),
+    } for m in missions]
+    chunks = vimg.split_pages(payloads)   # landscape pages, split by height
     out = []
-    for n, chunk in enumerate(chunks, 1):
-        payload = [{
-            "zone": m["zone"], "name": m["name"], "power": m["power"],
-            "biome": m["biome"], "rewards": image_rewards(m, kind),
-        } for m in chunk]
+    for n, payload in enumerate(chunks, 1):
         page_title = f"{title}  ({n}/{len(chunks)})" if len(chunks) > 1 else title
         png = vimg.render(payload, title=page_title, kind=kind)
         if not png:
             return []
         cap = f"{label} {n}/{len(chunks)}" if (label and len(chunks) > 1) else \
-            (label or _page_label(chunk, n, len(chunks)))
+            (label or _page_label(payload, n, len(chunks)))
         out.append((png, cap))
     return out
 
@@ -3594,7 +3593,8 @@ HEADER_H = 86
 CARD_PAD = 20
 ROW_H = 32
 FOOTER_H = 40
-MAX_CARDS = int(os.environ.get("IMAGE_MAX_CARDS", "10"))
+MAX_CARDS = int(os.environ.get("IMAGE_MAX_CARDS", "10"))   # hard cap per picture
+MIN_CARDS = int(os.environ.get("IMAGE_MIN_CARDS", "5"))    # fewest per picture
 MAX_REWARDS = 7
 
 _UNSUPPORTED = re.compile(
@@ -3864,16 +3864,15 @@ def render(missions: list[dict], *, title: str, kind: str = "vbucks",
 
 def render_pages(missions: list[dict], *, title: str, kind: str = "vbucks",
                  footer: str | None = None) -> list[bytes]:
-    """Every mission, split into pages of MAX_CARDS rows (one PNG each).
+    """Every mission, split into landscape pages (one PNG each).
 
     Nothing is dropped: a long list becomes several pictures instead of a
-    "+N more" note. One very tall picture would be shrunk by Telegram and
-    become unreadable on a phone, so pages stay phone-sized.
+    "+N more" note. Pages hold IMAGE_MIN_CARDS..IMAGE_MAX_CARDS missions,
+    spread evenly (5 + 5, never 4 + 1).
     """
     if not available() or not missions:
         return []
-    per = max(4, MAX_CARDS)
-    chunks = [missions[i:i + per] for i in range(0, len(missions), per)]
+    chunks = split_pages(missions)
     pages = []
     try:
         for n, chunk in enumerate(chunks, 1):
@@ -4417,12 +4416,13 @@ CREAM_T = (245, 240, 228)
 DIM = (178, 172, 208)
 EDGE = (84, 72, 140)
 BG_PAGE = (26, 22, 46)
-ROW_FILL = ((30, 26, 58, 205), (38, 32, 70, 205))
-ROW_EDGE = (126, 108, 214, 210)
-VB_FILL = (104, 24, 168, 225)
+ROW_FILL = (24, 20, 50, 228)
+ROW_EDGE = (126, 108, 214, 230)
+VB_FILL = (92, 22, 150, 235)
 VB_EDGE = (214, 150, 255, 255)
-ROW_H2 = 104
-ZONE_H = 32
+ZONE_H = 48
+ICON_A, LINE_A = 40, 50     # alert reward icon / line height
+ICON_B, LINE_B = 26, 34     # basic reward icon / line height
 
 
 ZONE_ART = (
@@ -4507,30 +4507,30 @@ def _layout_row(draw, m, x0, limit, fonts):
     """Place every reward of a mission; chips wrap to new lines, never cut.
 
     Returns (ops, height). Alert chips: icon + quantity + full name.
-    Basic rewards: small icon + full name on their own line(s).
+    Basic rewards: smaller icon + full name on their own line(s).
     """
     f_qty, f_name, f_basic = fonts
-    ops, y = [], 36
+    ops, y = [], 50
     rewards = m.get("rewards") or []
     alert = [r for r in rewards if not r.get("basic")]
     basic = [r for r in rewards if r.get("basic")]
 
     cx = x0
-    line_h = 34
     for r in alert:
         raw_name = str(r.get("item", "Item"))
         label, rarity = split_rarity(raw_name)
         label = _safe(_reward_label(raw_name), 40)
         qty = int(r.get("qty") or 1)
         qty_txt = f"{qty:,} " if qty > 1 else ""
-        need = 32 + draw.textlength(qty_txt, font=f_qty) + draw.textlength(label, font=f_name) + 18
+        need = ICON_A + 10 + draw.textlength(qty_txt, font=f_qty) \
+            + draw.textlength(label, font=f_name) + 26
         if cx + need > limit and cx > x0:
-            cx, y = x0, y + line_h
+            cx, y = x0, y + LINE_A
         ops.append(("alert", r, raw_name, rarity, qty_txt, label, cx, y))
         cx += need
     if not alert:
         ops.append(("none", None, "", None, "", "-", cx, y))
-    y += line_h
+    y += LINE_A
 
     if basic:
         cx, seen = x0, set()
@@ -4542,122 +4542,172 @@ def _layout_row(draw, m, x0, limit, fonts):
             qty = int(r.get("qty") or 1)
             if qty > 1:
                 label = f"{qty:,} {label}"
-            need = 22 + draw.textlength(label, font=f_basic) + 16
+            need = ICON_B + 8 + draw.textlength(label, font=f_basic) + 24
             if cx + need > limit and cx > x0:
-                cx, y = x0, y + 24
+                cx, y = x0, y + LINE_B
             ops.append(("basic", r, "", None, "", label, cx, y))
             cx += need
-        y += 24
-    return ops, max(y + 8, 96)
+        y += LINE_B
+    return ops, max(y + 10, 124)
+
+
+def _title_parts(title: str):
+    """"Reward Finder  (3/3)" -> ("Reward Finder", "(3/3)")."""
+    m = re.match(r"^(.*?)\s*(\(\d+/\d+\))\s*$", title)
+    return (m.group(1), m.group(2)) if m else (title, "")
+
+
+W, PAD, BADGE, TOP = 1280, 20, 92, 104
+X0 = PAD + 16 + BADGE + 18
+LIMIT = W - PAD - 14
+
+
+def _fonts():
+    return (_font(20, True), _font(18, True), _font(15))
+
+
+def _measure(missions, zone_icons=True):
+    """[(entry), ...] and the bottom y of the last row."""
+    probe = ImageDraw.Draw(Image.new("RGB", (4, 4)))
+    fonts = _fonts()
+    y, last_zone, plan = TOP, None, []
+    for index, m in enumerate(missions):
+        zone = _safe(m.get("zone", ""), 40).upper()
+        if zone != last_zone:
+            zicon = zone_art(m.get("zone", ""), 30) if zone_icons else None
+            plan.append(("zone", zone, y, zicon))
+            y += ZONE_H
+            last_zone = zone
+        ops, h = _layout_row(probe, m, X0, LIMIT, fonts)
+        plan.append(("row", m, y, index, ops, h))
+        y += h + 10
+    return plan, y
+
+
+def split_pages(missions: list[dict]) -> list[list[dict]]:
+    """Missions spread evenly over pictures: about MIN_CARDS + 1 per picture,
+    never fewer than MIN_CARDS (no 4 + 1 split). MAX_CARDS is kept when it
+    can be without breaking the minimum (7 missions with max 6 -> one picture)."""
+    n = len(missions)
+    if n == 0:
+        return []
+    lo, hi = max(1, MIN_CARDS), max(1, MAX_CARDS, MIN_CARDS)
+    pages = -(-n // (lo + 1))
+    while pages > 1 and n // pages < lo:
+        pages -= 1
+    while -(-n // pages) > hi and n // (pages + 1) >= lo:
+        pages += 1
+    size, extra = divmod(n, pages)
+    out, start = [], 0
+    for i in range(pages):
+        end = start + size + (1 if i < extra else 0)
+        out.append(missions[start:end])
+        start = end
+    return out
 
 
 def _render(missions, title, kind, footer, hidden):
     accent = ACCENTS.get(kind, ACCENTS["vbucks"])[0]
-    f_title = _font(28, True)
-    f_zone = _font(14, True)
-    f_name = _font(17, True)
-    f_dim = _font(15)
-    f_qty = _font(16, True)
-    f_rew = _font(14, True)
-    f_basic = _font(13)
-    f_small = _font(13)
-    fonts = (f_qty, f_rew, f_basic)
+    f_title = _font(32, True)
+    f_zone = _font(17, True)
+    f_name = _font(21, True)
+    f_dim = _font(17)
+    f_small = _font(14)
+    f_qty, f_rew, f_basic = _fonts()
+    x0, limit = X0, LIMIT
 
-    W, PAD, BADGE = 1000, 18, 68
-    x0 = PAD + 12 + BADGE + 14
-    limit = W - PAD - 12
-    probe = ImageDraw.Draw(Image.new("RGB", (4, 4)))
-
-    # measure pass
-    top = 78
-    y = top
-    last_zone = None
-    plan = []
-    for index, m in enumerate(missions):
-        zone = _safe(m.get("zone", ""), 40).upper()
-        if zone != last_zone:
-            zicon = zone_art(m.get("zone", ""), 26)
-            plan.append(("zone", zone, y, zicon))
-            y += ZONE_H
-            last_zone = zone
-        ops, h = _layout_row(probe, m, x0, limit, fonts)
-        plan.append(("row", m, y, index, ops, h))
-        y += h + 6
+    plan, y = _measure(missions)
     note = footer or ""
-    height = y + PAD + (24 if note else 0)
+    height = y + PAD - 4 + (26 if note else 0)
 
     canvas = _background(W, height, accent)
     layer = Image.new("RGBA", (W, height), (0, 0, 0, 0))
     ld = ImageDraw.Draw(layer)
-    ld.rounded_rectangle([PAD, 12, W - PAD, 66], radius=14, fill=(14, 12, 32, 170),
-                         outline=accent + (230,), width=2)
-    ld.rounded_rectangle([6, 6, W - 7, height - 7], radius=18, outline=ROW_EDGE, width=2)
+    # title banner
+    ld.rounded_rectangle([PAD, 16, W - PAD, 86], radius=18, fill=(14, 12, 34, 225),
+                         outline=accent + (255,), width=3)
+    ld.rounded_rectangle([PAD + 6, 22, W - PAD - 6, 80], radius=14,
+                         outline=accent + (70,), width=1)
     for entry in plan:
         if entry[0] == "zone":
             _, zone, zy, zicon = entry
-            shift = 30 if zicon is not None else 0
+            shift = 38 if zicon is not None else 0
             zw = ld.textlength(zone, font=f_zone) + shift
-            ld.rounded_rectangle([PAD, zy + 4, PAD + zw + 24, zy + 26], radius=11,
-                                 fill=(14, 12, 32, 190), outline=accent + (220,), width=1)
+            ld.rounded_rectangle([PAD, zy + 4, PAD + zw + 30, zy + 40], radius=18,
+                                 fill=(14, 12, 34, 230), outline=accent + (235,), width=2)
             continue
         _, m, ry, index, ops, h = entry
         has_vb = any(r.get("key") == "vbucks" for r in (m.get("rewards") or [])
                      if not r.get("basic"))
-        ld.rounded_rectangle([PAD, ry, W - PAD, ry + h], radius=12,
-                             fill=VB_FILL if has_vb else ROW_FILL[index % 2],
+        ld.rounded_rectangle([PAD, ry, W - PAD, ry + h], radius=16,
+                             fill=VB_FILL if has_vb else ROW_FILL,
                              outline=VB_EDGE if has_vb else ROW_EDGE, width=2)
+        # badge well
+        by = ry + (h - BADGE) // 2
+        ld.rounded_rectangle([PAD + 14, by - 2, PAD + 18 + BADGE, by + BADGE + 2], radius=18,
+                             fill=(10, 8, 26, 235), outline=ROW_EDGE[:3] + (120,), width=1)
+    ld.rounded_rectangle([6, 6, W - 7, height - 7], radius=20, outline=ROW_EDGE, width=2)
 
     image = Image.alpha_composite(canvas, layer)
     draw = ImageDraw.Draw(image)
-    safe_title = _safe(title, 60)
-    tw = draw.textlength(safe_title, font=f_title)
-    draw.text(((W - tw) / 2, 22), safe_title, font=f_title, fill=CREAM_T)
+
+    # title: bolt + text, page counter in the accent colour
+    main, count = _title_parts(_safe(title, 60))
+    gap = 12 if count else 0
+    tw = draw.textlength(main, font=f_title) + gap + draw.textlength(count, font=f_title)
+    tx = (W - tw - 44) / 2
+    _bolt(draw, tx, 32, 34, BOLT)
+    tx += 44
+    draw.text((tx, 32), main, font=f_title, fill=CREAM_T)
+    if count:
+        draw.text((tx + draw.textlength(main, font=f_title) + gap, 32), count,
+                  font=f_title, fill=accent)
 
     for entry in plan:
         if entry[0] == "zone":
             _, zone, zy, zicon = entry
-            shift = 30 if zicon is not None else 0
+            shift = 38 if zicon is not None else 0
             if zicon is not None:
-                image.paste(zicon, (PAD + 8, zy + 2), zicon)
-            draw.text((PAD + 12 + shift, zy + 7), zone, font=f_zone, fill=accent)
+                image.paste(zicon, (PAD + 12, zy + 7), zicon)
+            draw.text((PAD + 15 + shift, zy + 12), zone, font=f_zone, fill=accent)
             continue
         _, m, y, index, ops, h = entry
         plate, mask = _scene_plate(BADGE, m.get("name", ""))
-        image.paste(plate, (PAD + 12, y + min(14, (h - BADGE) // 2)), mask)
+        image.paste(plate, (PAD + 16, y + (h - BADGE) // 2), mask)
 
         x = x0
         power = m.get("power") or 0
         if power:
-            _bolt(draw, x, y + 10, 16, BOLT)
-            draw.text((x + 16, y + 8), str(power), font=f_name, fill=CREAM_T)
-            x += 22 + draw.textlength(str(power), font=f_name) + 10
+            _bolt(draw, x, y + 12, 22, BOLT)
+            draw.text((x + 28, y + 12), str(power), font=f_name, fill=CREAM_T)
+            x += 28 + draw.textlength(str(power), font=f_name) + 16
         name = _safe(m.get("name", ""), 60)
         biome = _safe(m.get("biome", ""), 40)
-        draw.text((x, y + 8), name, font=f_name, fill=CREAM_T)
+        draw.text((x, y + 12), name, font=f_name, fill=CREAM_T)
         if biome:
             nx = x + draw.textlength(name, font=f_name)
-            draw.text((nx, y + 10), _fit(draw, f"  -  {biome}", f_dim, max(40, limit - nx)),
+            draw.text((nx, y + 15), _fit(draw, f"  -  {biome}", f_dim, max(40, limit - nx)),
                       font=f_dim, fill=DIM)
 
         for kind_, r, raw_name, rarity, qty_txt, label, cx, oy in ops:
             cy = y + oy
             if kind_ == "none":
-                draw.text((cx, cy + 6), label, font=f_dim, fill=DIM)
+                draw.text((cx, cy + 10), label, font=f_dim, fill=DIM)
             elif kind_ == "alert":
-                ico = _icon(f"{r.get('raw', '')} | {raw_name}", 28, rarity)
+                ico = _icon(f"{r.get('raw', '')} | {raw_name}", ICON_A, rarity)
                 image.paste(ico, (int(cx), cy), ico)
-                tx = cx + 33
+                tx = cx + ICON_A + 10
                 if qty_txt:
-                    draw.text((tx, cy + 5), qty_txt, font=f_qty, fill=CREAM_T)
+                    draw.text((tx, cy + 10), qty_txt, font=f_qty, fill=CREAM_T)
                     tx += draw.textlength(qty_txt, font=f_qty)
-                draw.text((tx, cy + 6), label, font=f_rew, fill=rarity or DIM)
+                draw.text((tx, cy + 11), label, font=f_rew, fill=rarity or DIM)
             else:
-                ico = _icon(f"{r.get('raw', '')} | {r.get('item', '')}", 18)
-                image.paste(ico, (int(cx), cy + 2), ico)
-                draw.text((cx + 22, cy + 3), label, font=f_basic, fill=DIM)
+                ico = _icon(f"{r.get('raw', '')} | {r.get('item', '')}", ICON_B)
+                image.paste(ico, (int(cx), cy), ico)
+                draw.text((cx + ICON_B + 8, cy + 5), label, font=f_basic, fill=DIM)
 
     if note:
-        draw.text((PAD, height - 30), _fit(draw, _safe(note, 120), f_small, W - 2 * PAD),
+        draw.text((PAD, height - 32), _fit(draw, _safe(note, 120), f_small, W - 2 * PAD),
                   font=f_small, fill=DIM)
     buffer = io.BytesIO()
     image.convert("RGB").save(buffer, format="PNG", optimize=True)
@@ -4778,7 +4828,9 @@ REQUEST_TIMEOUT="15"
 BROADCAST_DELAY="0.06"
 LOG_LEVEL="INFO"
 DEFAULT_LANG="en"
-# Missions per picture in image mode; longer lists are sent as an album.
+# Missions per picture in image mode (about MIN+1 each, spread evenly, never
+# fewer than MIN unless the whole list is shorter); longer lists go as an album.
+IMAGE_MIN_CARDS="5"
 IMAGE_MAX_CARDS="10"
 # Drop your own square PNGs in ART_DIR to replace the drawn icons. Several
 # names are tried per slot (first hit wins), e.g. bomb|deliver|dtb:
@@ -4832,6 +4884,7 @@ ensure_conf() {
 }
 ensure_conf UPDATE_URL "$UPDATE_URL"
 ensure_conf IMAGE_MAX_CARDS "10"
+ensure_conf IMAGE_MIN_CARDS "5"
 ensure_conf WEEKLY_URL2 ""
 ensure_conf TOP_PER_ZONE "5"
 ensure_conf ART_DIR "$APP_DIR/art"
