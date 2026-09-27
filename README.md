@@ -43,6 +43,25 @@ text or as ready-made pictures.
 
 ---
 
+## 📱 App (Android / iPhone) — v2.0.0
+
+The same missions, Top Missions, Reward Finder, weekly reward and season
+timers as the bot, as an app — no Telegram needed:
+
+- **Any phone or browser:** open
+  [plus98ir.github.io/Fortnite_Missions/app](https://plus98ir.github.io/Fortnite_Missions/app/)
+  and choose **Add to Home screen** (Android: Chrome menu · iPhone: Safari share
+  button). It then opens full screen and also works offline.
+- **Android APK:** download `FortniteMissions-v2.0.0.apk` from the
+  [app release](https://github.com/Plus98ir/Fortnite_Missions/releases/tag/app-v2.0.0)
+  and install it (allow "install unknown apps" once).
+
+The data is rebuilt every day right after the 00:00 UTC reset by GitHub
+Actions, using the bot's own code, so the app and the bot always show the
+same lists. The app asks you to accept the terms of use on first start.
+
+---
+
 ## ⚙️ Step 1 — Get a bot token
 
 1. Open Telegram and search for **@BotFather**.

@@ -1,0 +1,20 @@
+{
+  "name": "Fortnite Missions",
+  "short_name": "FN Missions",
+  "description": "Fortnite Save the World missions: V-Bucks, Power 160, Ventures 140, Top Missions, Reward Finder, weekly reward and season timers.",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1a0f33",
+  "theme_color": "#1a0f33",
+  "lang": "en",
+  "dir": "auto",
+  "categories": ["games", "utilities"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

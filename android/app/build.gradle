@@ -1,0 +1,50 @@
+plugins {
+    id "com.android.application"
+}
+
+// Release signing comes from the environment (GitHub Actions secrets).
+// Without it the build is signed with the debug key so it still installs.
+def ksFile = System.getenv("KEYSTORE_FILE")
+def hasReleaseKey = ksFile != null && new File(ksFile).exists()
+
+android {
+    namespace "ir.plus98.fnmissions"
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "ir.plus98.fnmissions"
+        minSdk 24
+        targetSdk 34
+        versionCode 20000
+        versionName "2.0.0"
+        buildConfigField "String", "APP_URL", "\"${project.property('appUrl')}\""
+    }
+
+    buildFeatures {
+        buildConfig true
+    }
+
+    signingConfigs {
+        release {
+            if (hasReleaseKey) {
+                storeFile file(ksFile)
+                storeType "pkcs12"
+                storePassword System.getenv("KEYSTORE_PASSWORD")
+                keyAlias System.getenv("KEY_ALIAS")
+                keyPassword System.getenv("KEY_PASSWORD")
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig hasReleaseKey ? signingConfigs.release : signingConfigs.debug
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}

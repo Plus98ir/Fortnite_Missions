@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Offline</title>
+<style>
+  body{margin:0;min-height:100vh;display:grid;place-items:center;background:#1a0f33;color:#f5f0e4;
+    font-family:system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif;text-align:center;padding:24px;box-sizing:border-box}
+  .box{max-width:380px}
+  .bolt{font-size:48px}
+  h1{font-size:1.25rem;margin:12px 0 6px}
+  p{color:#b2acd0;margin:0 0 6px;line-height:1.6}
+  p[dir="rtl"]{font-family:Tahoma,sans-serif}
+  button{margin-top:18px;padding:12px 26px;border:0;border-radius:14px;background:#ffb13b;color:#2a1600;
+    font:inherit;font-weight:700;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="bolt">⚡</div>
+  <h1>No connection</h1>
+  <p>The first start needs the internet once. After that the app also works offline.</p>
+  <p dir="rtl">برای اولین اجرا یک بار اینترنت لازم است. بعد از آن اپ آفلاین هم کار می‌کند.</p>
+  <button type="button" onclick="window.FNAndroid ? FNAndroid.retry() : location.reload()">Retry · تلاش دوباره</button>
+</div>
+</body>
+</html>

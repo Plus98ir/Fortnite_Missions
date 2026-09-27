@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1a0f33">
+<meta name="color-scheme" content="dark">
+<meta name="description" content="Fortnite Save the World missions: V-Bucks, Power 160, Ventures 140, Top Missions, Reward Finder, weekly reward and season timers.">
+<title>Fortnite Missions</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FN Missions">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700&family=Vazirmatn:wght@400;600;800&display=swap">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<header class="bar">
+  <button class="icon-btn" id="back" type="button" aria-label="Back" hidden>
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
+  <a class="brand" href="#/"><img src="icons/icon-192.png" alt="" width="30" height="30"><span id="brand">Fortnite Missions</span></a>
+  <button class="pill" id="lang" type="button">فارسی</button>
+</header>
+
+<main id="view" tabindex="-1"></main>
+
+<footer class="foot">
+  <p id="foot-status"></p>
+  <p id="foot-terms"></p>
+  <p class="ver">v2.0.0</p>
+</footer>
+
+<div class="modal" id="terms" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="terms-title">
+    <h2 id="terms-title"></h2>
+    <ul id="terms-list"></ul>
+    <div class="row">
+      <button class="btn primary" id="terms-ok" type="button"></button>
+      <button class="btn ghost" id="terms-no" type="button"></button>
+    </div>
+    <button class="pill" id="terms-lang" type="button">فارسی</button>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
