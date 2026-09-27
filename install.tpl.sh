@@ -54,6 +54,39 @@ echo "===================================================="
 echo ""
 
 # --------------------------------------------------------------------------
+# 0. Terms of use — must be accepted once before installing
+# --------------------------------------------------------------------------
+DISCLAIMER_OK="no"
+if grep -q '^DISCLAIMER_ACCEPTED="yes"' "$CONF_FILE" 2>/dev/null; then
+    DISCLAIMER_OK="yes"
+fi
+if [[ "$DISCLAIMER_OK" != "yes" ]]; then
+    echo "--------------------------------------------------------------"
+    echo " Terms of use"
+    echo "--------------------------------------------------------------"
+    echo " * This bot is a free, open-source project for PERSONAL use."
+    echo "   It is NOT for sale and must not be sold or used commercially."
+    echo " * Fortnite, its names, icons and artwork are the property of"
+    echo "   Epic Games, Inc. This project is not affiliated with or"
+    echo "   endorsed by Epic Games."
+    echo " * Mission data comes from third-party community sites and may"
+    echo "   be late or wrong."
+    echo " * You install and use this bot entirely at your own risk and"
+    echo "   responsibility."
+    echo "--------------------------------------------------------------"
+    if [[ "$UNATTENDED" == "yes" || ! -t 0 ]]; then
+        c_warn "ℹ️  Non-interactive run: the terms above apply to this installation."
+    else
+        read -r -p "Do you accept these terms? Type 'yes' to continue: " TERMS_ANS
+        case "${TERMS_ANS,,}" in
+            y|yes) DISCLAIMER_OK="yes"; c_ok "✅ Terms accepted." ;;
+            *) c_err "Installation cancelled: the terms were not accepted."; exit 1 ;;
+        esac
+    fi
+    echo ""
+fi
+
+# --------------------------------------------------------------------------
 # 1. Configuration
 # --------------------------------------------------------------------------
 BOT_TOKEN=""; ADMIN_CHAT_ID=""; PROXY_URL=""
@@ -243,6 +276,7 @@ ensure_conf() {
     grep -q "^$1=" "$CONF_FILE" 2>/dev/null || printf '%s="%s"\n' "$1" "$2" >> "$CONF_FILE"
 }
 ensure_conf UPDATE_URL "$UPDATE_URL"
+[[ "$DISCLAIMER_OK" == "yes" ]] && ensure_conf DISCLAIMER_ACCEPTED "yes"
 ensure_conf IMAGE_MAX_CARDS "10"
 ensure_conf IMAGE_MIN_CARDS "5"
 ensure_conf WEEKLY_URL2 ""
