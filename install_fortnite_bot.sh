@@ -491,7 +491,12 @@ def _rewards(mission: dict, key: str) -> list[dict]:
             qty = int(entry.get("quantity", entry.get("qty", 1)) or 1)
         except (TypeError, ValueError):
             qty = 1
-        out.append({"item": _prettify_item(item), "raw": str(item), "qty": qty})
+        raw_id = str(item)
+        # Heroes come as a bare name ("Fleetfoot Ken (Legendary)"); tag them so
+        # the icon, the Hero filter and Top Missions scoring see a hero.
+        if str(entry.get("rewardType", "")).lower() == "heroes"                 and not re.search(r"hero|hid_", raw_id, re.I):
+            raw_id = f"Hero:{raw_id}"
+        out.append({"item": _prettify_item(item), "raw": raw_id, "qty": qty})
     return out
 
 
@@ -1975,7 +1980,7 @@ REWARD_EMOJI = {
 
 def reward_emoji(reward: dict) -> str:
     names = vimg.reward_kind(f"{reward.get('raw', '')} | {reward.get('item', '')}")[0]
-    return REWARD_EMOJI.get(names[0], "▪️")
+    return REWARD_EMOJI.get(names[0], "▪️") if names else "▪️"
 
 
 MISSION_SEP = "┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄"
@@ -2322,7 +2327,7 @@ async def send_photo_cached(update: Update, key: tuple, source, build_pages,
             return True
         except TelegramError:
             log.debug("cached file_ids rejected; re-uploading", exc_info=True)
-    uploads = [InputFile(io.BytesIO(p), filename=f"{n}-{filename}")
+    uploads = [InputFile(io.BytesIO(p), filename=f"{n}-{filename}", attach=True)
                for n, (p, _) in enumerate(pages, 1)]
     try:
         file_ids = await _send_album(message, uploads, caps)
@@ -2384,7 +2389,7 @@ async def send_top(update: Update, lang: str, prefs: dict, missions: list[dict])
         await reply(update, t(lang, "top_none"))
         return
     groups = group_by_zone(tops)
-    if not vimg.available():
+    if not prefs.get("image_mode") or not vimg.available():
         await reply(update, format_top(groups, lang))
         return
 
@@ -4731,53 +4736,89 @@ WEEKLY_REWARD_ART = {"weapon": ["schematic"], "hero": ["hero"], "survivor": ["su
 
 def render_weekly(label: str, *, key: str = "", title: str = "This Week's Reward",
                   footer: str | None = None) -> bytes | None:
+    """Weekly reward card in the same style as the mission pictures:
+    title banner, one framed row with the art in a badge well."""
     if not available() or not label:
         return None
     try:
-        W, H, ICON = 900, 340, 190
-        image = _background(W, H, AMBER).convert("RGB")
-        draw = ImageDraw.Draw(image)
-        draw.rounded_rectangle([6, 6, W - 7, H - 7], radius=18, outline=EDGE, width=2)
-        f_title, f_label, f_small = _font(26, True), _font(36, True), _font(15)
-        t = _safe(title, 40)
-        draw.text(((W - draw.textlength(t, font=f_title)) / 2, 22), t,
-                  font=f_title, fill=CREAM_T)
-        draw.line([(60, 62), (W - 60, 62)], fill=AMBER, width=2)
+        accent = AMBER
+        ICON = 220
+        f_title, f_label = _font(32, True), _font(44, True)
+        f_sub, f_small = _font(19), _font(16, True)
+        probe = ImageDraw.Draw(Image.new("RGB", (4, 4)))
 
-        ix, iy = 60, 92
-        draw.rounded_rectangle([ix - 8, iy - 8, ix + ICON + 8, iy + ICON + 8], radius=22,
-                               fill=(52, 42, 92), outline=AMBER, width=3)
-        pic = art(WEEKLY_ART_NAMES.get(key, [key]), ICON, "weekly") if key else None
-        if pic is None and key:
-            pic = art(WEEKLY_REWARD_ART.get(key, []), ICON, "rewards")
-        if pic is None:
-            drawer, colour = WEEKLY_DRAWN.get(key, (ic_star, BOLT))
-            big = Image.new("RGBA", (ICON * 3, ICON * 3), (0, 0, 0, 0))
-            drawer(ImageDraw.Draw(big), ICON * .3, ICON * .3, ICON * 2.4, colour)
-            pic = big.resize((ICON, ICON), Image.LANCZOS)
-        image.paste(pic, (ix, iy), pic)
-
-        tx = ix + ICON + 50
-        words, lines, cur = _safe(label, 40).split(), [], ""
+        tx = PAD + 16 + ICON + 16 + 36
+        words, lines, cur = _safe(label, 48).split(), [], ""
         for w in words:
             trial = f"{cur} {w}".strip()
-            if draw.textlength(trial, font=f_label) > W - tx - 40 and cur:
+            if probe.textlength(trial, font=f_label) > W - PAD - 30 - tx and cur:
                 lines.append(cur)
                 cur = w
             else:
                 cur = trial
         lines.append(cur)
-        ty = iy + ICON // 2 - len(lines) * 24
+
+        row_top = TOP
+        row_h = max(ICON + 32, 56 * len(lines) + 120)
+        H = row_top + row_h + PAD + 6
+
+        canvas = _background(W, H, accent)
+        layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+        ld = ImageDraw.Draw(layer)
+        ld.rounded_rectangle([PAD, 16, W - PAD, 86], radius=18, fill=(14, 12, 34, 225),
+                             outline=accent + (255,), width=3)
+        ld.rounded_rectangle([PAD + 6, 22, W - PAD - 6, 80], radius=14,
+                             outline=accent + (70,), width=1)
+        ld.rounded_rectangle([PAD, row_top, W - PAD, row_top + row_h], radius=16,
+                             fill=ROW_FILL, outline=ROW_EDGE, width=2)
+        iy = row_top + (row_h - ICON) // 2
+        ld.rounded_rectangle([PAD + 14, iy - 4, PAD + 18 + ICON, iy + ICON + 4], radius=22,
+                             fill=(10, 8, 26, 235), outline=accent + (200,), width=2)
+        ld.rounded_rectangle([6, 6, W - 7, H - 7], radius=20, outline=ROW_EDGE, width=2)
+        image = Image.alpha_composite(canvas, layer)
+        draw = ImageDraw.Draw(image)
+
+        t = _safe(title, 50)
+        bw = draw.textlength(t, font=f_title)
+        bx = (W - bw - 44) / 2
+        _bolt(draw, bx, 32, 34, BOLT)
+        draw.text((bx + 44, 32), t, font=f_title, fill=CREAM_T)
+
+        pic = art(WEEKLY_ART_NAMES.get(key, [key]), ICON - 16, "weekly") if key else None
+        if pic is None and key:
+            pic = art(WEEKLY_REWARD_ART.get(key, []), ICON - 16, "rewards")
+        if pic is None:
+            drawer, colour = WEEKLY_DRAWN.get(key, (ic_star, BOLT))
+            size = ICON - 16
+            big = Image.new("RGBA", (size * 3, size * 3), (0, 0, 0, 0))
+            drawer(ImageDraw.Draw(big), size * .3, size * .3, size * 2.4, colour)
+            pic = big.resize((size, size), Image.LANCZOS)
+        mask = Image.new("L", pic.size, 0)
+        ImageDraw.Draw(mask).rounded_rectangle([0, 0, pic.size[0] - 1, pic.size[1] - 1],
+                                               radius=16, fill=255)
+        alpha = pic.getchannel("A") if pic.mode == "RGBA" else None
+        if alpha is not None:
+            from PIL import ImageChops
+            mask = ImageChops.multiply(mask, alpha)
+        image.paste(pic, (PAD + 24, iy + 8), mask)
+
+        block_h = 56 * len(lines) + 34 + (40 if footer else 0)
+        ty = row_top + (row_h - block_h) // 2
         for line in lines:
             draw.text((tx, ty), line, font=f_label, fill=BOLT)
-            ty += 48
+            ty += 56
         draw.text((tx, ty + 6), "Complete 10 mission alerts in a 160+ zone",
-                  font=f_small, fill=DIM)
+                  font=f_sub, fill=DIM)
         if footer:
-            draw.text((60, H - 36), _safe(footer, 80), font=f_small, fill=DIM)
+            chip = _safe(footer, 60)
+            cw = draw.textlength(chip, font=f_small)
+            cy = ty + 44
+            draw.rounded_rectangle([tx, cy, tx + cw + 28, cy + 30], radius=15,
+                                   fill=(14, 12, 34), outline=accent, width=2)
+            draw.text((tx + 14, cy + 6), chip, font=f_small, fill=accent)
+
         buffer = io.BytesIO()
-        image.convert("P", palette=Image.Palette.ADAPTIVE, colors=224).save(
-            buffer, format="PNG", optimize=True)
+        image.convert("RGB").save(buffer, format="PNG", optimize=True)
         return buffer.getvalue()
     except Exception:
         log.exception("weekly rendering failed")
