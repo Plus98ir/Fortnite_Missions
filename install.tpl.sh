@@ -188,7 +188,9 @@ REQUEST_TIMEOUT="15"
 BROADCAST_DELAY="0.06"
 LOG_LEVEL="INFO"
 DEFAULT_LANG="en"
-# Missions per picture in image mode; longer lists are sent as an album.
+# Missions per picture in image mode (about MIN+1 each, spread evenly, never
+# fewer than MIN unless the whole list is shorter); longer lists go as an album.
+IMAGE_MIN_CARDS="5"
 IMAGE_MAX_CARDS="10"
 # Drop your own square PNGs in ART_DIR to replace the drawn icons. Several
 # names are tried per slot (first hit wins), e.g. bomb|deliver|dtb:
@@ -242,6 +244,7 @@ ensure_conf() {
 }
 ensure_conf UPDATE_URL "$UPDATE_URL"
 ensure_conf IMAGE_MAX_CARDS "10"
+ensure_conf IMAGE_MIN_CARDS "5"
 ensure_conf WEEKLY_URL2 ""
 ensure_conf TOP_PER_ZONE "5"
 ensure_conf ART_DIR "$APP_DIR/art"
