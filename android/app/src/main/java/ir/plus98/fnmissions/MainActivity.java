@@ -31,12 +31,12 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Window window = getWindow();
-        window.setStatusBarColor(Color.parseColor("#1a0f33"));
-        window.setNavigationBarColor(Color.parseColor("#1a0f33"));
+        window.setStatusBarColor(Color.parseColor("#120926"));
+        window.setNavigationBarColor(Color.parseColor("#120926"));
 
         appHost = Uri.parse(BuildConfig.APP_URL).getHost();
         web = new WebView(this);
-        web.setBackgroundColor(Color.parseColor("#1a0f33"));
+        web.setBackgroundColor(Color.parseColor("#120926"));
         web.setOverScrollMode(View.OVER_SCROLL_NEVER);
         setContentView(web);
 

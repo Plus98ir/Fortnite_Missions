@@ -2386,15 +2386,19 @@ async def send_photo_cached(update: Update, key: tuple, source, build_pages,
 
 async def _send_album(message, photos: list, captions: list[str]) -> list[str]:
     """Send photos (InputFile or file_id); returns the file_ids Telegram gave."""
+    return await _send_album_to(message.get_bot(), message.chat_id, photos, captions)
+
+
+async def _send_album_to(bot, chat_id: int, photos: list, captions: list[str]) -> list[str]:
     ids: list[str] = []
     for start in range(0, len(photos), 10):
         group = photos[start:start + 10]
         caps = captions[start:start + 10]
         if len(group) == 1:
-            sent = [await message.reply_photo(photo=group[0], caption=caps[0])]
+            sent = [await bot.send_photo(chat_id=chat_id, photo=group[0], caption=caps[0])]
         else:
             media = [InputMediaPhoto(media=p, caption=c) for p, c in zip(group, caps)]
-            sent = await message.reply_media_group(media=media)
+            sent = await bot.send_media_group(chat_id=chat_id, media=media)
         for msg in sent or []:
             if msg is not None and getattr(msg, "photo", None):
                 ids.append(msg.photo[-1].file_id)
@@ -3220,7 +3224,16 @@ async def broadcast(context: ContextTypes.DEFAULT_TYPE, builders) -> tuple[int, 
             if not body:
                 continue
             try:
-                if isinstance(body, dict):
+                if isinstance(body, dict) and "album" in body:
+                    try:
+                        await _broadcast_album(context.bot, int(chat_id), body)
+                        body = None
+                    except (Forbidden, RetryAfter):
+                        raise
+                    except TelegramError:
+                        log.debug("album broadcast failed; sending text", exc_info=True)
+                        body = body["text"]
+                elif isinstance(body, dict):
                     try:
                         await context.bot.send_photo(
                             chat_id=int(chat_id),
@@ -3264,6 +3277,25 @@ async def broadcast(context: ContextTypes.DEFAULT_TYPE, builders) -> tuple[int, 
     return sent, failed
 
 
+async def _broadcast_album(bot, chat_id: int, body: dict) -> None:
+    """Send a pre-rendered album; the first upload's file_ids serve everyone else."""
+    entry = body["album"]
+    pages = entry["pages"]
+    caps = [(f"{body['caption']}\n{c}" if i == 0 else c) for i, (_, c) in enumerate(pages)]
+    if entry.get("file_ids"):
+        try:
+            await _send_album_to(bot, chat_id, entry["file_ids"], caps)
+            return
+        except (Forbidden, RetryAfter):
+            raise
+        except TelegramError:
+            log.debug("cached file_ids rejected; re-uploading", exc_info=True)
+            entry["file_ids"] = None
+    uploads = [InputFile(io.BytesIO(p), filename=f"{n}-{entry['name']}", attach=True)
+               for n, (p, _) in enumerate(pages, 1)]
+    entry["file_ids"] = await _send_album_to(bot, chat_id, uploads, caps) or None
+
+
 async def daily_job(context: ContextTypes.DEFAULT_TYPE) -> None:
     try:
         vbucks = await asyncio.to_thread(src.fetch_vbucks_missions, force=True)
@@ -3273,18 +3305,51 @@ async def daily_job(context: ContextTypes.DEFAULT_TYPE) -> None:
         log.exception("daily fetch failed — skipping broadcast")
         return
 
+    # Image-mode subscribers get the same pictures as the menu buttons,
+    # rendered once per language up front (not inside the send loop).
+    lists = {"power": (power, "p160_title"), "venture": (venture, "v140_title"),
+             "vbucks": (vbucks, "vbucks_title")}
+    albums: dict[tuple[str, str], dict] = {}
+    if vimg.available():
+        langs = {r["lang"] for _, r in store.items()
+                 if r.get("notify") and r.get("image_mode") and not r.get("banned")}
+        for lang in sorted(langs):
+            for kind, (missions, title_key) in lists.items():
+                shown = cached_filter(missions, unfiltered(None), title_key)
+                if not shown:
+                    continue
+                title = re.sub(r"<[^>]+>", "", t(lang, title_key))
+                try:
+                    pages = await asyncio.to_thread(render_pages, shown, lang, kind, title)
+                except Exception:
+                    log.exception("daily %s pictures failed — text instead", kind)
+                    pages = []
+                if pages:
+                    albums[(lang, kind)] = {
+                        "pages": pages, "file_ids": None, "name": f"{kind}.png",
+                        "caption": t(lang, "image_caption").format(title, len(shown))}
+
+    def picture(record: dict, kind: str, text: str, header: str = ""):
+        entry = albums.get((record["lang"], kind)) if record.get("image_mode") else None
+        if not entry:
+            return text
+        return {"album": entry, "caption": header + entry["caption"], "text": text}
+
     # Three separate messages, V-Bucks last: the phone notification shows the
     # last one, and that is the one people actually care about.
-    def build_power(record: dict) -> str:
+    def build_power(record: dict):
         lang = record["lang"]
-        return (f"{t(lang, 'daily_title')}\n{SEP}\n\n"
+        text = (f"{t(lang, 'daily_title')}\n{SEP}\n\n"
                 f"{format_power(power, lang, 160, unfiltered(record))}")
+        return picture(record, "power", text, f"{t(lang, 'daily_title')}\n")
 
-    def build_venture(record: dict) -> str:
-        return format_venture(venture, record["lang"], unfiltered(record))
+    def build_venture(record: dict):
+        return picture(record, "venture",
+                       format_venture(venture, record["lang"], unfiltered(record)))
 
-    def build_vbucks(record: dict) -> str:
-        return format_vbucks(vbucks, record["lang"], unfiltered(record))
+    def build_vbucks(record: dict):
+        return picture(record, "vbucks",
+                       format_vbucks(vbucks, record["lang"], unfiltered(record)))
 
     await broadcast(context, [build_power, build_venture, build_vbucks])
 

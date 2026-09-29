@@ -8,7 +8,9 @@ ranking, same filter matching, same icons (art pack or the bot's drawings).
 The art pack is the bot's art.zip (latest release by default), unpacked with
 the installer's own unpacker; the background is copied next to the data.
 
-usage: python app/tools/build_data.py [--installer PATH] [--art-zip PATH|URL] [--out app/data]
+usage: python app/tools/build_data.py [--installer PATH] [--art-zip PATH|URL] [--out app/data] [--need-new]
+--need-new: on a new UTC day, exit 3 (and keep the old file) while the
+sources still serve yesterday's missions, so the caller can retry.
 Env (optional): SEASON_START_UTC, SEASON_END_UTC, WEEKLY_URL2, TOP_PER_ZONE, ART_URL.
 """
 from __future__ import annotations
@@ -96,6 +98,7 @@ def main() -> int:
     ap.add_argument("--installer", default=str(ROOT / "install_fortnite_bot.sh"))
     ap.add_argument("--out", default=str(APP / "data"))
     ap.add_argument("--art-zip", default=os.environ.get("ART_URL") or ART_URL)
+    ap.add_argument("--need-new", action="store_true")
     args = ap.parse_args()
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
@@ -266,7 +269,11 @@ def main() -> int:
         old = json.loads(target.read_text(encoding="utf-8"))
         unchanged = {k: v for k, v in old.items() if k != "generated"} ==             {k: v for k, v in doc.items() if k != "generated"}
     except (OSError, ValueError):
-        unchanged = False
+        old, unchanged = None, False
+    if (args.need_new and old and old.get("day") != doc["day"]
+            and old.get("missions") == doc["missions"] and old.get("lists") == doc["lists"]):
+        print(f"sources still serve the {old.get('day')} missions; old file kept")
+        return 3
     if not unchanged:
         target.write_text(json.dumps(doc, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     icons.prune()

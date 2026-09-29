@@ -9,7 +9,13 @@
   // ---- strings: the bot's own wording (HTML stripped) -------------------
   var S = {
     en: {
-      brand: "Fortnite Missions", langBtn: "فارسی", back: "Back",
+      brand: "Fortnite Missions", brand_sub: "Save the World", langBtn: "فارسی", back: "Back",
+      nav_home: "Home", nav_vbucks: "V-Bucks", nav_160: "Power 160", nav_top: "Top", nav_finder: "Finder",
+      hero_title: "Daily Missions", hero_sub: "{} missions from Stonewood to Ventures — refreshed at every reset.",
+      stat_all: "All missions", stat_160: "Power 160", stat_top: "Top picks",
+      sec_today: "Today", sec_missions: "Missions", vb_today: "V-Bucks today", vb_none: "No V-Bucks missions today.",
+      weekly_short: "Weekly reward",
+      d_days: "Days", d_hours: "Hours", d_min: "Min", d_sec: "Sec",
       btn_vbucks: "💎 V-Bucks Missions", btn_160: "⚡ Power 160 Missions", btn_v140: "🌴 Ventures 140 Missions",
       btn_top: "🔥 Top Missions", btn_finder: "🔎 Reward Finder", btn_weekly: "🛠 Weekly Reward",
       btn_timer: "⏱ Season Timers", btn_filters: "⚙️ My Filters",
@@ -50,7 +56,13 @@
       foot: "Personal use only · not for sale · Fortnite names, icons and art © Epic Games, Inc. · Use at your own risk."
     },
     fa: {
-      brand: "ماموریت‌های فورتنایت", langBtn: "English", back: "بازگشت",
+      brand: "ماموریت‌های فورتنایت", brand_sub: "نجات جهان", langBtn: "English", back: "بازگشت",
+      nav_home: "خانه", nav_vbucks: "ویباکس", nav_160: "پاور ۱۶۰", nav_top: "برتر", nav_finder: "جستجو",
+      hero_title: "ماموریت‌های روزانه", hero_sub: "{} ماموریت از استون‌وود تا ونچر — با هر ریست به‌روز می‌شود.",
+      stat_all: "همه ماموریت‌ها", stat_160: "پاور ۱۶۰", stat_top: "برترها",
+      sec_today: "امروز", sec_missions: "ماموریت‌ها", vb_today: "ویباکس امروز", vb_none: "امروز ماموریت ویباکس نیست.",
+      weekly_short: "جایزه هفتگی",
+      d_days: "روز", d_hours: "ساعت", d_min: "دقیقه", d_sec: "ثانیه",
       btn_vbucks: "💎 ماموریت‌های ویباکس", btn_160: "⚡ ماموریت‌های پاور ۱۶۰", btn_v140: "🌴 ماموریت‌های ونچر ۱۴۰",
       btn_top: "🔥 ماموریت‌های برتر", btn_finder: "🔎 جستجوی جایزه", btn_weekly: "🛠 جایزه هفتگی",
       btn_timer: "⏱ تایمر سیزن‌ها", btn_filters: "⚙️ فیلترهای من",
@@ -163,6 +175,11 @@
     return null;
   }
 
+  function vbucksToday() {
+    var list = missionsOf("vbucks"), total = 0;
+    list.forEach(function (m) { m.a.forEach(function (r) { if (r.vb) total += r.q; }); });
+    return { missions: list.length, total: total };
+  }
   function missionsOf(listName) {
     return (state.data.lists[listName] || []).map(function (i) { return state.data.missions[i]; });
   }
@@ -232,7 +249,7 @@
   function listPage(titleKey, noneKey, list, groupKey) {
     var html = title(t(titleKey), list.length);
     if (!list.length) return html + '<p class="note">' + esc(t(noneKey)) + "</p>";
-    return html + (state.mode === "text" ? textBlock(list) : cards(list, groupKey));
+    return html + (state.mode === "text" ? textBlock(list) : '<div class="list">' + cards(list, groupKey) + "</div>");
   }
 
   function statusNotes() {
@@ -244,19 +261,55 @@
 
   var pages = {
     "": function () {
-      var tiles = [["vbucks", "btn_vbucks"], ["p160", "btn_160"], ["v140", "btn_v140"], ["top", "btn_top"],
-        ["finder", "btn_finder"], ["weekly", "btn_weekly"], ["timers", "btn_timer"], ["filters", "btn_filters"]];
-      return statusNotes() +
-        '<div class="status"><span>' + fmtLtr(t("updated"), stamp()) +
-        '</span><span>' + esc(t("reset_in")) + ' <b id="reset-clock">--:--:--</b></span></div>' +
-        '<nav class="grid">' + tiles.map(function (x) {
-          var label = t(x[1]), ic = label.split(" ")[0];
-          return '<a class="tile" href="#/' + x[0] + '"><span class="ic">' + ic + "</span><span>" +
-            esc(label.slice(ic.length + 1)) + "</span></a>";
-        }).join("") + "</nav>" +
+      var vb = vbucksToday(), d = state.data, w = d.weekly, all = (d.lists.all || []).length;
+      function tile(route, key, cls, count) {
+        var label = t(key), ic = label.split(" ")[0];
+        return '<a class="tile ' + cls + '" href="#/' + route + '"><span class="ic">' + ic + "</span>" +
+          (count !== undefined ? '<span class="n">' + num(count) + "</span>" : "") +
+          '<span class="lb">' + esc(label.slice(ic.length + 1)) + "</span></a>";
+      }
+      function stat(route, n, key) {
+        return (route ? '<a class="stat" href="#/' + route + '">' : '<div class="stat">') + "<b>" + num(n) + "</b><span>" +
+          esc(t(key)) + "</span>" + (route ? "</a>" : "</div>");
+      }
+      // V-Bucks and the weekly reward change by themselves (daily / weekly):
+      // shown in full here, side by side, nothing to open.
+      var vbRows = missionsOf("vbucks").map(function (m) {
+        var q = m.a.reduce(function (sum, r) { return sum + (r.vb ? r.q : 0); }, 0);
+        return '<li><img src="' + esc(m.s) + '" alt="" width="40" height="40" loading="lazy"><span class="t"><b>' + esc(m.n) +
+          "</b><small>" + esc(m.z) + ' · <span class="pw">' + m.p + "</span></small></span>" +
+          '<span class="q">' + num(q) + "</span></li>";
+      }).join("");
+      var today = '<div class="today">' +
+        '<section class="panel vbp"><div class="ph"><span>💎 ' + esc(t("vb_today")) + "</span><b>" + num(vb.total) + "</b></div>" +
+        (vbRows ? '<ul class="vbl">' + vbRows + "</ul>" : '<p class="none">' + esc(t("vb_none")) + "</p>") + "</section>" +
+        '<section class="panel wkp"><div class="ph"><span>🛠 ' + esc(t("weekly_short")) + "</span></div>" +
+        (w ? '<img src="' + esc(w.icon) + '" alt="" width="120" height="120"><b dir="ltr">' + esc(w.label) + "</b>" +
+          "<small>" + esc(t("weekly_sub")) + "</small>" +
+          (w.week ? '<span class="chip-week">' + fmtLtr(t("weekly_week"), w.week) + "</span>" : "") +
+          (w.current ? "" : '<small class="warn">' + esc(t("weekly_stale")) + "</small>")
+          : '<p class="none">' + esc(t("weekly_none")) + "</p>") + "</section></div>";
+      return statusNotes() + '<div class="home">' +
+        '<div class="lead"><a class="hero" href="#/top"><span class="art"></span>' +
+        '<span class="tag">⏱ ' + esc(t("reset_in")) + ' <b id="reset-clock">--:--:--</b></span>' +
+        "<h1>" + esc(t("hero_title")) + "</h1><p>" + esc(t("hero_sub")).replace("{}", "<b>" + num(all) + "</b>") + "</p>" +
+        '<span class="cta">' + esc(t("btn_top")) + "</span></a>" +
+        '<div class="stats">' + stat("", all, "stat_all") +
+        stat("p160", (d.lists.p160 || []).length, "stat_160") + stat("top", (d.lists.top || []).length, "stat_top") + "</div></div>" +
+        '<div class="side"><div class="sec"><h2>' + esc(t("sec_today")) + "</h2><span>" + fmtLtr(t("updated"), stamp()) + "</span></div>" +
+        today + "</div>" +
+        '<div class="tms"><div class="sec"><h2>' + esc(t("btn_timer").replace(/^\S+\s/, "")) + "</h2></div>" +
+        '<div class="timers"><section class="timer" id="t-bp"></section><section class="timer" id="t-vn"></section></div></div>' +
+        '<div class="wide"><div class="sec"><h2>' + esc(t("sec_missions")) + "</h2></div>" +
+        '<nav class="grid">' +
+        tile("vbucks", "btn_vbucks", "t-vbucks", (d.lists.vbucks || []).length) +
+        tile("p160", "btn_160", "t-p160", (d.lists.p160 || []).length) +
+        tile("v140", "btn_v140", "t-v140", (d.lists.v140 || []).length) +
+        tile("top", "btn_top", "t-top", (d.lists.top || []).length) +
+        tile("finder", "btn_finder", "t-finder") + tile("filters", "btn_filters", "t-filters") + "</nav>" +
         '<div class="toggle" role="group">' +
         '<button type="button" data-mode="cards" aria-pressed="' + (state.mode === "cards") + '">' + esc(t("mode_cards")) + "</button>" +
-        '<button type="button" data-mode="text" aria-pressed="' + (state.mode === "text") + '">' + esc(t("mode_text")) + "</button></div>";
+        '<button type="button" data-mode="text" aria-pressed="' + (state.mode === "text") + '">' + esc(t("mode_text")) + "</button></div></div></div>";
     },
     vbucks: function () { return statusNotes() + listPage("vbucks_title", "vbucks_none", missionsOf("vbucks")); },
     p160: function () { return statusNotes() + listPage("p160_title", "p160_none", missionsOf("p160")); },
@@ -278,7 +331,7 @@
         (w.week ? '<span class="chip-week">' + fmtLtr(t("weekly_week"), w.week) + "</span>" : "") + "</div></div>";
     },
     timers: function () {
-      return title(t("btn_timer")) + '<section class="timer" id="t-bp"></section><section class="timer" id="t-vn"></section>';
+      return title(t("btn_timer")) + '<div class="timers"><section class="timer" id="t-bp"></section><section class="timer" id="t-vn"></section></div>';
     },
     filters: function () {
       var f = state.filters, d = state.data;
@@ -308,8 +361,10 @@
     return "<h2>🌐 Fortnite " + esc(label) + " — " + esc(name) + "</h2>" +
       (pct !== null ? '<div class="kv"><span>' + esc(t("progress")) + "</span><b>" + pct.toFixed(1) + "%</b></div>" +
         '<div class="progress"><span style="width:' + pct.toFixed(2) + '%"></span></div>' : "") +
-      '<div class="clock">' + pad(days) + " : " + pad(h) + " : " + pad(m) + " : " + pad(sec) + "</div>" +
-      '<div class="kv"><span>' + esc(t("remaining")) + "</span><b>" + days + " " + esc(t("days")) + "</b></div>" +
+      '<div class="digits">' + [[days, "d_days"], [h, "d_hours"], [m, "d_min"], [sec, "d_sec"]].map(function (x) {
+        return "<div><b>" + pad(x[0]) + "</b><span>" + esc(t(x[1])) + "</span></div>";
+      }).join("") + "</div>" +
+      '<div class="kv rem"><span>' + esc(t("remaining")) + "</span><b>" + days + " " + esc(t("days")) + "</b></div>" +
       '<div class="kv"><span>' + esc(t("ends")) + "</span><b>" + new Date(end).toISOString().slice(0, 16).replace("T", " ") + " UTC</b></div>" +
       '<div class="kv"><span>' + esc(t("next")) + "</span><b>" + esc(next) + "</b></div>";
   }
@@ -340,6 +395,8 @@
     document.documentElement.lang = state.lang;
     document.documentElement.dir = state.lang === "fa" ? "rtl" : "ltr";
     $("brand").textContent = t("brand");
+    $("brand-sub").textContent = t("brand_sub");
+    dock(r);
     $("lang").textContent = t("langBtn");
     $("back").hidden = r === "";
     $("back").setAttribute("aria-label", t("back"));
@@ -353,9 +410,23 @@
       return;
     }
     var page = pages[r] || pages[""];
+    view.dataset.page = pages[r] ? r || "home" : "home";
     view.innerHTML = page();
     $("foot-status").innerHTML = fmtLtr(t("updated"), stamp());
+    var vb = vbucksToday();
+    $("vb-total").textContent = num(vb.total);
+    $("vb-pill").hidden = !vb.total || r !== "";
     tick();
+  }
+
+  function dock(r) {
+    var el = $("dock"), items = [["", "🏠", "nav_home"], ["p160", "⚡", "nav_160"], ["vbucks", "💎", "nav_vbucks", "mid"],
+      ["top", "🔥", "nav_top"], ["finder", "🔎", "nav_finder"]];
+    el.hidden = load("terms", "") !== "yes";
+    el.innerHTML = items.map(function (x) {
+      return '<a href="#/' + x[0] + '"' + (x[3] ? ' class="mid"' : "") + (r === x[0] ? ' aria-current="page"' : "") +
+        '><span class="i">' + x[1] + "</span><span>" + esc(t(x[2])) + "</span></a>";
+    }).join("");
   }
 
   function showTerms() {

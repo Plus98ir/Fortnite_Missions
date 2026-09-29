@@ -1,13 +1,22 @@
 name: App data
 
-# Rebuilds app/data (missions, weekly reward, icons) with the bot's own code
-# after every daily reset, and a few more times while the sources settle.
+# Rebuilds app/data (missions, weekly reward, icons) with the bot's own code.
+#
+# GitHub starts scheduled runs late — around 00:00 UTC often 3-7 hours late —
+# so the daily reset cannot rely on a "just after midnight" cron. Instead the
+# evening runs start early, sleep until 00:00 UTC inside the job and then retry
+# until the sources publish the new day's missions. Whichever scheduled run
+# starts first does the work; a run that finds today's data already built and
+# no reset within WAIT_MAX just refreshes (weekly reward, late fixes).
 on:
   schedule:
-    - cron: "7 0 * * *"
-    - cron: "30 0 * * *"
+    - cron: "0 17 * * *"
+    - cron: "0 19 * * *"
+    - cron: "0 21 * * *"
+    - cron: "0 22 * * *"
+    - cron: "0 23 * * *"
     - cron: "10 1 * * *"
-    - cron: "0 4 * * *"
+    - cron: "0 6 * * *"
     - cron: "0 12 * * *"
   push:
     branches: [main]
@@ -21,14 +30,21 @@ on:
 permissions:
   contents: write
 
+# Scheduled runs share one queue (a sleeping run holds it until the reset);
+# push / manual runs use their own so they are never stuck behind it.
 concurrency:
-  group: app-data
+  group: app-data-${{ github.event_name == 'schedule' && 'schedule' || 'now' }}
   cancel-in-progress: false
+
+env:
+  WAIT_MAX: 12600        # sleep for the reset only if it is at most 3h30m away
+  RETRY_FOR: 5400        # after the reset, wait up to 90 min for new missions
+  RETRY_EVERY: 120
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 355
     steps:
       - uses: actions/checkout@v4
 
@@ -42,18 +58,59 @@ jobs:
           cat /tmp/requirements.txt
           pip install -q -r /tmp/requirements.txt
 
+      - name: Wait for the daily reset
+        id: plan
+        run: |
+          today=$(date -u +%F)
+          built=$(python -c "import json;print(json.load(open('app/data/data.json')).get('day',''))" 2>/dev/null || true)
+          now=$(date -u +%s)
+          reset=$(( (now / 86400 + 1) * 86400 ))
+          left=$(( reset - now ))
+          echo "now=$(date -u +%FT%TZ) built=$built next reset in ${left}s"
+          if [ "$built" != "$today" ]; then
+            echo "Data is from $built: building today's now."
+            echo "need_new=1" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.event_name }}" = schedule ] && [ "$left" -le "$WAIT_MAX" ]; then
+            echo "Sleeping ${left}s + 60s until 00:01 UTC."
+            sleep $(( left + 60 ))
+            echo "need_new=1" >> "$GITHUB_OUTPUT"
+          else
+            echo "need_new=0" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Build data
         env:
           SEASON_START_UTC: ${{ vars.SEASON_START_UTC }}
           SEASON_END_UTC: ${{ vars.SEASON_END_UTC }}
           WEEKLY_URL2: ${{ vars.WEEKLY_URL2 }}
+          NEED_NEW: ${{ steps.plan.outputs.need_new }}
         run: |
           # Unset repo variables arrive as empty strings: drop them so the
           # bot's own defaults apply.
           for v in SEASON_START_UTC SEASON_END_UTC WEEKLY_URL2; do
             [ -z "${!v}" ] && unset $v
           done
-          python app/tools/build_data.py
+          if [ "$NEED_NEW" != 1 ]; then
+            python app/tools/build_data.py
+            exit $?
+          fi
+          # New day: retry until the sources serve new missions; after
+          # RETRY_FOR publish whatever they have (the app then shows its
+          # "still being published" note and polls again).
+          deadline=$(( $(date +%s) + RETRY_FOR ))
+          while :; do
+            set +e
+            python app/tools/build_data.py --need-new
+            rc=$?
+            set -e
+            [ $rc -ne 3 ] && exit $rc
+            if [ "$(date +%s)" -ge "$deadline" ]; then
+              echo "Still yesterday's missions after ${RETRY_FOR}s: publishing as is."
+              python app/tools/build_data.py
+              exit $?
+            fi
+            sleep "$RETRY_EVERY"
+          done
 
       - name: Commit
         run: |
@@ -65,5 +122,10 @@ jobs:
             exit 0
           fi
           git commit -q -m "App data $(date -u +%Y-%m-%dT%H:%MZ)"
-          git pull -q --rebase origin main
-          git push -q origin HEAD:main
+          # A run from the other queue may have pushed meanwhile: keep ours.
+          for i in 1 2 3; do
+            git pull -q --rebase -X theirs origin main && git push -q origin HEAD:main && exit 0
+            git rebase --abort 2>/dev/null || true
+            sleep 5
+          done
+          exit 1
