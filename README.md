@@ -9,7 +9,7 @@
 | **🇺🇸 English** | [🇮🇷 فارسی](README.fa.md) |
 | --- | --- |
 
-A Telegram bot for **Fortnite: Save the World** that tracks V-Bucks missions,
+A Telegram bot for **Fortnite: Save the World** that tracks **V-Bucks missions,
 Power 160 missions, Ventures 140 missions, the best missions of the day, the
 weekly reward and the season countdowns. It answers in English or Persian, as
 text or as ready-made pictures.
