@@ -267,7 +267,7 @@ WEEKLY_RESET_WEEKDAY="3"
 
 # --- season dates (update once per season) ------------------------------
 SEASON_START_UTC="2026-08-20T07:30:00+00:00"
-SEASON_END_UTC="2026-11-01T07:30:00+00:00"
+SEASON_END_UTC="2026-11-01T08:00:00+00:00"
 ENV_EOF
     umask 022
 fi
@@ -307,6 +307,10 @@ fi
 if grep -q '^DAILY_RESET_UTC="00:05"' "$CONF_FILE" 2>/dev/null; then
     sed -i 's|^DAILY_RESET_UTC=.*|DAILY_RESET_UTC="00:01"|' "$CONF_FILE"
     c_ok "✅ Daily alert moved to 00:01 UTC."
+fi
+# Old default guessed 07:30; fortnite.gg's exact Ch7 S4 end is 08:00 UTC.
+if grep -q '^SEASON_END_UTC="2026-11-01T07:30:00+00:00"' "$CONF_FILE" 2>/dev/null; then
+    sed -i 's|^SEASON_END_UTC=.*|SEASON_END_UTC="2026-11-01T08:00:00+00:00"|' "$CONF_FILE"
 fi
 if grep -q '^WEEKLY_RESET_UTC="00:10"' "$CONF_FILE" 2>/dev/null; then
     sed -i 's|^WEEKLY_RESET_UTC=.*|WEEKLY_RESET_UTC="00:02"|' "$CONF_FILE"

@@ -891,13 +891,21 @@ def weekly_is_current(value: Any) -> bool:
 # Season countdown (fortnite.gg)
 # --------------------------------------------------------------------------
 _DATE_RE = re.compile(r"ends? on [A-Za-z]+,\s*([A-Za-z]+ \d{1,2},\s*\d{4})", re.I)
+# The live countdown carries the exact end as epoch milliseconds.
+_TARGET_RE = re.compile(r"""data-target=['"](\d{12,14})['"]""")
 
 
 @boundary_cache(daily_anchor)
 def fetch_season_end() -> datetime | None:
     response = _SESSION.get(SEASON_URL, timeout=REQUEST_TIMEOUT)
     response.raise_for_status()
-    match = _DATE_RE.search(response.text)
+    target = _TARGET_RE.search(response.text)
+    if target:
+        end = datetime.fromtimestamp(int(target.group(1)) / 1000, timezone.utc)
+        if end.year >= 2020:
+            return end
+    # The date sits inside a <span>, so match on the text without tags.
+    match = _DATE_RE.search(re.sub(r"<[^>]+>", "", response.text))
     if not match:
         return None
     raw = re.sub(r"\s+", " ", match.group(1)).strip()
@@ -905,7 +913,8 @@ def fetch_season_end() -> datetime | None:
         parsed = datetime.strptime(raw, "%B %d, %Y")
     except ValueError:
         return None
-    return parsed.replace(hour=7, minute=30, tzinfo=timezone.utc)
+    # Date only: seasons end at the 08:00 UTC downtime.
+    return parsed.replace(hour=8, minute=0, tzinfo=timezone.utc)
 
 
 def fetch_text(url: str, *, timeout: float | None = None) -> str:
@@ -1009,7 +1018,7 @@ WEEKLY_RESET_UTC = os.environ.get("WEEKLY_RESET_UTC", "00:02")
 WEEKLY_RESET_WEEKDAY = int(os.environ.get("WEEKLY_RESET_WEEKDAY", "3"))
 
 SEASON_START_UTC = os.environ.get("SEASON_START_UTC", "2026-08-20T07:30:00+00:00")
-SEASON_END_UTC = os.environ.get("SEASON_END_UTC", "2026-11-01T07:30:00+00:00")
+SEASON_END_UTC = os.environ.get("SEASON_END_UTC", "2026-11-01T08:00:00+00:00")
 
 DEFAULT_LANG = os.environ.get("DEFAULT_LANG", "en")
 
@@ -5013,7 +5022,7 @@ WEEKLY_RESET_WEEKDAY="3"
 
 # --- season dates (update once per season) ------------------------------
 SEASON_START_UTC="2026-08-20T07:30:00+00:00"
-SEASON_END_UTC="2026-11-01T07:30:00+00:00"
+SEASON_END_UTC="2026-11-01T08:00:00+00:00"
 ENV_EOF
     umask 022
 fi
@@ -5053,6 +5062,10 @@ fi
 if grep -q '^DAILY_RESET_UTC="00:05"' "$CONF_FILE" 2>/dev/null; then
     sed -i 's|^DAILY_RESET_UTC=.*|DAILY_RESET_UTC="00:01"|' "$CONF_FILE"
     c_ok "✅ Daily alert moved to 00:01 UTC."
+fi
+# Old default guessed 07:30; fortnite.gg's exact Ch7 S4 end is 08:00 UTC.
+if grep -q '^SEASON_END_UTC="2026-11-01T07:30:00+00:00"' "$CONF_FILE" 2>/dev/null; then
+    sed -i 's|^SEASON_END_UTC=.*|SEASON_END_UTC="2026-11-01T08:00:00+00:00"|' "$CONF_FILE"
 fi
 if grep -q '^WEEKLY_RESET_UTC="00:10"' "$CONF_FILE" 2>/dev/null; then
     sed -i 's|^WEEKLY_RESET_UTC=.*|WEEKLY_RESET_UTC="00:02"|' "$CONF_FILE"
