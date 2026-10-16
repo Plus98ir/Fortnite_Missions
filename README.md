@@ -2,6 +2,7 @@
   <a href="https://Plus98ir.github.io">
     <img src="https://img.shields.io/badge/Website-Plus98ir.github.io-blue?style=for-the-badge&logo=google-chrome" alt="Web Page">
   </a>
+  <a href="https://hits.sh/github.com/Plus98ir/Fortnite_Missions/"><img src="https://hits.sh/github.com/Plus98ir/Fortnite_Missions.svg?style=for-the-badge&label=views&color=2563eb" alt="Views"></a>
 </p>
 
 # 🤖 Fortnite STW Missions — Telegram Bot
