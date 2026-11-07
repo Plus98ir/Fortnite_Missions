@@ -223,6 +223,11 @@ WEEKLY_URL = os.environ.get("WEEKLY_URL", "https://fortnitedb.com/")
 # When both answer and disagree, the admin is asked to confirm.
 WEEKLY_URL2 = os.environ.get("WEEKLY_URL2", "").strip()
 SEASON_URL = os.environ.get("SEASON_URL", "https://fortnite.gg/season-countdown")
+# Backup for servers fortnite.gg blocks: the app's public data file, rebuilt
+# daily with this same code. Empty = no backup.
+SEASON_MIRROR_URL = os.environ.get(
+    "SEASON_MIRROR_URL",
+    "https://plus98ir.github.io/Fortnite_Missions/app/data/data.json").strip()
 
 REQUEST_TIMEOUT = float(os.environ.get("REQUEST_TIMEOUT", "15"))
 # Missions change only at the 00:00 UTC reset, so the cache is valid until
@@ -895,26 +900,71 @@ _DATE_RE = re.compile(r"ends? on [A-Za-z]+,\s*([A-Za-z]+ \d{1,2},\s*\d{4})", re.
 _TARGET_RE = re.compile(r"""data-target=['"](\d{12,14})['"]""")
 
 
+# The list of seasons, newest first: "November 1 — December 4 2026". The start
+# year is only written when it differs: "November 29 — March 19 2026".
+_ROW_RE = re.compile(r"([A-Z][a-z]+ \d{1,2})(?:,? (\d{4}))?\s*[—–-]\s*"
+                     r"([A-Z][a-z]+ \d{1,2}),? (\d{4})")
+
+
+def _season_start(text: str, end: datetime) -> datetime | None:
+    """Start of the season that ends at ``end``, from the list of seasons."""
+    for row in _ROW_RE.finditer(text):
+        try:
+            row_end = datetime.strptime(f"{row[3]} {row[4]}", "%B %d %Y")
+            if row_end.date() != end.date():
+                continue
+            start = datetime.strptime(f"{row[1]} {row[2] or row[4]}", "%B %d %Y")
+            if start >= row_end:           # crosses new year, year left out
+                start = start.replace(year=start.year - 1)
+        except ValueError:
+            continue
+        # Date only: seasons change at the 08:00 UTC downtime.
+        return start.replace(hour=8, tzinfo=timezone.utc)
+    return None
+
+
 @boundary_cache(daily_anchor)
-def fetch_season_end() -> datetime | None:
+def fetch_season() -> tuple[datetime | None, datetime] | None:
+    """(start, end) of the current season; start is None if the page lacks it."""
     response = _SESSION.get(SEASON_URL, timeout=REQUEST_TIMEOUT)
     response.raise_for_status()
+    # Dates sit inside tags, so match on the text without them.
+    text = re.sub(r"<[^>]+>", "", response.text)
+    end = None
     target = _TARGET_RE.search(response.text)
     if target:
         end = datetime.fromtimestamp(int(target.group(1)) / 1000, timezone.utc)
-        if end.year >= 2020:
-            return end
-    # The date sits inside a <span>, so match on the text without tags.
-    match = _DATE_RE.search(re.sub(r"<[^>]+>", "", response.text))
-    if not match:
+        if end.year < 2020:
+            end = None
+    if end is None:
+        match = _DATE_RE.search(text)
+        if not match:
+            return None
+        raw = re.sub(r"\s+", " ", match.group(1)).strip()
+        try:
+            parsed = datetime.strptime(raw, "%B %d, %Y")
+        except ValueError:
+            return None
+        # Date only: seasons end at the 08:00 UTC downtime.
+        end = parsed.replace(hour=8, tzinfo=timezone.utc)
+    return _season_start(text, end), end
+
+
+@boundary_cache(daily_anchor)
+def fetch_season_mirror() -> tuple[datetime | None, datetime] | None:
+    """The same (start, end) from the app's data file; None once it has passed."""
+    if not SEASON_MIRROR_URL:
         return None
-    raw = re.sub(r"\s+", " ", match.group(1)).strip()
-    try:
-        parsed = datetime.strptime(raw, "%B %d, %Y")
-    except ValueError:
+    response = _SESSION.get(SEASON_MIRROR_URL, timeout=REQUEST_TIMEOUT)
+    response.raise_for_status()
+    season = response.json().get("season") or {}
+    if not season.get("bpEnd"):
         return None
-    # Date only: seasons end at the 08:00 UTC downtime.
-    return parsed.replace(hour=8, minute=0, tzinfo=timezone.utc)
+    end = datetime.fromisoformat(season["bpEnd"])
+    if end <= datetime.now(timezone.utc):
+        return None
+    start = season.get("bpStart")
+    return (datetime.fromisoformat(start) if start else None), end
 
 
 def fetch_text(url: str, *, timeout: float | None = None) -> str:
@@ -932,7 +982,7 @@ def fetch_bytes(url: str, *, timeout: float | None = None) -> bytes:
 
 
 def clear_all_caches() -> None:
-    for fn in (_missions, fetch_weekly_reward, fetch_season_end):
+    for fn in (_missions, fetch_weekly_reward, fetch_season, fetch_season_mirror):
         clear = getattr(fn, "cache_clear", None)
         if clear:
             clear()
@@ -1017,8 +1067,8 @@ WEEKLY_RESET_UTC = os.environ.get("WEEKLY_RESET_UTC", "00:02")
 # 0 = Monday ... 6 = Sunday. STW weekly reset is Thursday.
 WEEKLY_RESET_WEEKDAY = int(os.environ.get("WEEKLY_RESET_WEEKDAY", "3"))
 
-SEASON_START_UTC = os.environ.get("SEASON_START_UTC", "2026-08-20T07:30:00+00:00")
-SEASON_END_UTC = os.environ.get("SEASON_END_UTC", "2026-11-01T08:00:00+00:00")
+SEASON_START_UTC = os.environ.get("SEASON_START_UTC", "2026-11-01T08:00:00+00:00")
+SEASON_END_UTC = os.environ.get("SEASON_END_UTC", "2026-12-04T07:00:00+00:00")
 
 DEFAULT_LANG = os.environ.get("DEFAULT_LANG", "en")
 
@@ -2169,8 +2219,8 @@ VENTURE_CYCLES = [
     {"name": "Mild Meadows 🌸", "start": (1, 24), "end": (4, 5)},
     {"name": "Scurvy Shoals 🏴‍☠️", "start": (4, 5), "end": (6, 20)},
     {"name": "Blasted Badlands 🏜", "start": (6, 20), "end": (9, 3)},
-    {"name": "Hexsylvania 🎃", "start": (9, 3), "end": (11, 20)},
-    {"name": "Frostnite ❄️", "start": (11, 20), "end": (1, 24)},
+    {"name": "Hexsylvania 🎃", "start": (9, 3), "end": (11, 18)},
+    {"name": "Frostnite ❄️", "start": (11, 18), "end": (1, 24)},
 ]
 
 
@@ -2194,21 +2244,27 @@ def venture_window(now: datetime | None = None):
 
 
 def battlepass_window():
-    """Season end from fortnite.gg, falling back to the configured date.
+    """(start, end) of the current season.
 
-    The live lookup is best-effort: if the site is unreachable or its
-    wording changed, SEASON_END_UTC from the config is used instead.
+    Both come from the same place, so a new season moves them together:
+    fortnite.gg, then the app's data file (fortnite.gg blocks some servers),
+    then SEASON_START_UTC / SEASON_END_UTC from the config.
     """
-    start = _parse_dt(SEASON_START_UTC)
-    end = None
-    try:
-        end = src.fetch_season_end()
-    except Exception:
-        log.warning("season lookup failed; using the configured end date",
-                    exc_info=True)
-    if end is None:
-        end = _parse_dt(SEASON_END_UTC)
-    return start, end
+    config_start = _parse_dt(SEASON_START_UTC)
+    config_end = _parse_dt(SEASON_END_UTC)
+    for name, fetch in (("fortnite.gg", src.fetch_season),
+                        ("app data", src.fetch_season_mirror)):
+        try:
+            start, end = fetch()
+        except Exception:
+            log.warning("season lookup via %s failed", name, exc_info=True)
+            continue
+        # A configured start is only good for the season it was set for;
+        # without a trusted start the progress bar is left out.
+        if start is None and config_end and config_end > datetime.now(timezone.utc):
+            start = config_start
+        return start, end
+    return config_start, config_end
 
 
 def format_countdown(kind: str, lang: str) -> str:
@@ -5020,9 +5076,9 @@ WEEKLY_RESET_UTC="00:02"
 # 0=Mon 1=Tue 2=Wed 3=Thu 4=Fri 5=Sat 6=Sun
 WEEKLY_RESET_WEEKDAY="3"
 
-# --- season dates (update once per season) ------------------------------
-SEASON_START_UTC="2026-08-20T07:30:00+00:00"
-SEASON_END_UTC="2026-11-01T08:00:00+00:00"
+# --- season dates: only a backup, normally read live from fortnite.gg ----
+SEASON_START_UTC="2026-11-01T08:00:00+00:00"
+SEASON_END_UTC="2026-12-04T07:00:00+00:00"
 ENV_EOF
     umask 022
 fi

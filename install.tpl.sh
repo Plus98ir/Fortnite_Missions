@@ -265,9 +265,9 @@ WEEKLY_RESET_UTC="00:02"
 # 0=Mon 1=Tue 2=Wed 3=Thu 4=Fri 5=Sat 6=Sun
 WEEKLY_RESET_WEEKDAY="3"
 
-# --- season dates (update once per season) ------------------------------
-SEASON_START_UTC="2026-08-20T07:30:00+00:00"
-SEASON_END_UTC="2026-11-01T08:00:00+00:00"
+# --- season dates: only a backup, normally read live from fortnite.gg ----
+SEASON_START_UTC="2026-11-01T08:00:00+00:00"
+SEASON_END_UTC="2026-12-04T07:00:00+00:00"
 ENV_EOF
     umask 022
 fi
