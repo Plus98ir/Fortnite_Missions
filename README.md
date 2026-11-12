@@ -22,8 +22,9 @@ TA53aFyGNfSAcrCaJi9QmA9x5W47nPJcf7
 
 # 🤖 Fortnite STW Missions — Telegram Bot
 
-| **🇺🇸 English** | [🇮🇷 فارسی](README.fa.md) |
-| --- | --- |
+<div align="center">
+<table><tr><td><b>🇺🇸 English</b></td><td><a href="https://github.com/Plus98ir/Fortnite_Missions/blob/main/README.fa.md">🇮🇷 فارسی</a></td></tr></table>
+</div>
 
 A Telegram bot for **Fortnite: Save the World** that tracks **V-Bucks** missions,
 Power 160 missions, Ventures 140 missions, the best missions of the day, the

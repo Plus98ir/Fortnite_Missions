@@ -8,8 +8,9 @@
 
 # 🤖 ربات تلگرام ماموریت‌های فورتنایت (Save the World)
 
-| [🇺🇸 English](README.md) | **🇮🇷 فارسی** |
-| --- | --- |
+<div align="center">
+<table><tr><td><a href="https://github.com/Plus98ir/Fortnite_Missions/blob/main/README.md">🇺🇸 English</a></td><td><b>🇮🇷 فارسی</b></td></tr></table>
+</div>
 
 رباتی برای **Fortnite: Save the World** که ماموریت‌های وی‌باکس، پاور ۱۶۰،
 ونچر ۱۴۰، بهترین ماموریت‌های روز، جایزه هفتگی و تایمر سیزن‌ها را دنبال
